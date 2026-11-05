@@ -323,6 +323,8 @@ urlpatterns = [
 	re_path(r'^systemer/leverandorland/$', views.rapport_systemer_leverandor_land, name='rapport_systemer_leverandor_land'),
 	re_path(r'^systemer/leverandor/$', views.alle_leverandorer, name='alle_leverandorer'),
 	re_path(r'^systemer/leverandor/(?P<pk>\d{1,8})/$', views.leverandor, name='leverandor'),
+	# 2026-11-05: Bare /systemer/driftsmodell/ lands on the overview (same as /alle/).
+	re_path(r'^systemer/driftsmodell/$', views.alle_driftsmodeller),
 	re_path(r'^systemer/driftsmodell/(?P<pk>\d{1,8})/$', views.detaljer_driftsmodell, name='detaljer_driftsmodell'),
 	re_path(r'^systemer/driftsmodell/alle/$', views.alle_driftsmodeller, name='alle_driftsmodeller'),
 	re_path(r'^systemer/programvare/alle/$', views.alle_programvarer_optimized, name='alle_programvarer'),

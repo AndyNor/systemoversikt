@@ -12411,29 +12411,61 @@ def alle_leverandorer(request):
 
 def alle_driftsmodeller(request):
 	#Vise liste over alle driftsmodeller
+	# 2026-11-05: Full Cytoscape platform map + aggregate D1–D5 chart + virksomhet tags.
 	# 2026-06-22: Prefetch related fields and annotate system count – full model data on alle-page.
 	# 2026-06-22: Dropped lokasjon_lagring_valgmeny prefetch – field removed from model.
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render_access_denied(request, required_permissions)
 
-	driftsmodeller = Driftsmodell.objects.annotate(
-		antall_systemer=Count('systemer', filter=~Q(systemer__livslop_status=7)),
-	).select_related(
-		'ansvarlig_virksomhet',
-		'overordnet_plattform',
-		'applikasjonsdriftleverandor',
-	).prefetch_related(
-		'leverandor',
-		'underleverandorer',
-		'avtaler',
-	).order_by('sort_order', 'navn')
+	driftsmodeller = list(
+		Driftsmodell.objects.annotate(
+			antall_systemer=Count('systemer', filter=~Q(systemer__livslop_status=7)),
+		).select_related(
+			'ansvarlig_virksomhet',
+			'overordnet_plattform',
+			'overordnet_plattform__ansvarlig_virksomhet',
+			'applikasjonsdriftleverandor',
+		).prefetch_related(
+			'leverandor',
+			'underleverandorer',
+			'avtaler',
+		).order_by('sort_order', 'navn')
+	)
+
+	plattformer_by_pk = {p.pk: p for p in driftsmodeller}
+	systemtall_per_plattform = {
+		p.pk: p.antall_systemer for p in driftsmodeller
+	}
+	plattform_graf = _driftsmodell_plattform_graf(
+		plattformer_by_pk, systemtall_per_plattform, current_pk=None
+	)
+
+	systemer_med_plattform = (
+		System.objects.filter(~Q(livslop_status=7))
+		.exclude(driftsmodell_foreignkey=None)
+		.prefetch_related('service_offerings')
+	)
+	chart_kritikalitet = _driftsmodell_kritikalitet_chart(systemer_med_plattform)
+
+	ansvarlige_virksomheter = []
+	sett_virk = set()
+	for p in driftsmodeller:
+		v = p.ansvarlig_virksomhet
+		if v and v.pk not in sett_virk:
+			sett_virk.add(v.pk)
+			ansvarlige_virksomheter.append(v)
+	ansvarlige_virksomheter.sort(key=lambda v: (v.virksomhetsforkortelse or v.virksomhetsnavn or ''))
 
 	return render(request, 'driftsmodell_alle.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'driftsmodeller': driftsmodeller,
 		'driftsmodell_felt_referanse': Driftsmodell(),
+		'plattform_graf': plattform_graf,
+		'chart_kritikalitet': chart_kritikalitet,
+		'ansvarlige_virksomheter': ansvarlige_virksomheter,
+		'system_colors': SYSTEM_COLORS,
 	})
 
 
@@ -12641,15 +12673,206 @@ def driftsmodell_virksomhet(request, pk=None):
 
 
 
+# 2026-11-05: Platform detail chart – D1–D5 counts via CMDB operation factor (same rules as systemprioritet).
+KRITIKALITET_CHART_META = [
+	(1, 'D1 Liv og helse', '#c0392b'),
+	(2, 'D2 Virksomhetskritisk', '#e74c3c'),
+	(3, 'D3 Kritisk', '#f39c12'),
+	(4, 'D4 Periodisk kritisk', '#f1c40f'),
+	(5, 'D5 Ikke kritisk', '#27ae60'),
+]
+
+
+def _system_driftskritikalitet_klasse(system):
+	# 2026-11-05: Lowest D-number among operational offerings; None when unlinked (chart bucket «Ikke koblet»).
+	if not system.service_offerings.all():
+		return None
+	kritikalitet = 5
+	fant_verdi = False
+	for bss in system.service_offerings.all():
+		if bss.operational_status == 1:
+			try:
+				bss_kritikalitet = int(re.findall(r'\d+', bss.u_service_operation_factor or '')[0])
+				fant_verdi = True
+				if bss_kritikalitet < kritikalitet:
+					kritikalitet = bss_kritikalitet
+			except (IndexError, TypeError, ValueError):
+				pass
+	return kritikalitet if fant_verdi else 5
+
+
+def _driftsmodell_plattform_farge(driftsmodell):
+	# 2026-11-05: Same palette as home/virksomhet platform charts (SYSTEM_COLORS).
+	if driftsmodell.samarbeidspartner:
+		return SYSTEM_COLORS['samarbeidspartner']
+	if driftsmodell.er_saas:
+		return SYSTEM_COLORS['saas']
+	dig_ansvar = (
+		driftsmodell.ansvarlig_virksomhet
+		and driftsmodell.ansvarlig_virksomhet.virksomhetsforkortelse in ('DIG', 'UKE')
+	)
+	if driftsmodell.type_plattform == 1:
+		return SYSTEM_COLORS['drift_uke_privat'] if dig_ansvar else SYSTEM_COLORS['drift_virksomhet_privat']
+	if driftsmodell.type_plattform == 2:
+		return SYSTEM_COLORS['drift_uke_sky'] if dig_ansvar else SYSTEM_COLORS['drift_virksomhet_sky']
+	return SYSTEM_COLORS['ukjent']
+
+
+def _driftsmodell_relaterte_plattform_pks(driftsmodell):
+	# 2026-11-05: Ancestor chain + all descendant platform ids for neighborhood graph.
+	pks = {driftsmodell.pk}
+	ancestor = driftsmodell.overordnet_plattform
+	seen = set()
+	while ancestor is not None and ancestor.pk not in seen:
+		pks.add(ancestor.pk)
+		seen.add(ancestor.pk)
+		ancestor = ancestor.overordnet_plattform
+
+	kø = [driftsmodell.pk]
+	while kø:
+		forelder_pk = kø.pop(0)
+		for barn_pk in Driftsmodell.objects.filter(
+			overordnet_plattform_id=forelder_pk
+		).values_list('pk', flat=True):
+			if barn_pk not in pks:
+				pks.add(barn_pk)
+				kø.append(barn_pk)
+	return pks
+
+
+def _driftsmodell_kritikalitet_chart(systemer):
+	# 2026-11-05: Shared D1–D5 doughnut payload for driftsmodell detail and overview.
+	kritikalitet_teller = Counter()
+	ikke_koblet = 0
+	for system in systemer:
+		klasse = _system_driftskritikalitet_klasse(system)
+		if klasse is None:
+			ikke_koblet += 1
+		else:
+			kritikalitet_teller[klasse] += 1
+
+	chart_labels = []
+	chart_data = []
+	chart_colors = []
+	for klasse, label, farge in KRITIKALITET_CHART_META:
+		antall = kritikalitet_teller.get(klasse, 0)
+		if antall:
+			chart_labels.append(label)
+			chart_data.append(antall)
+			chart_colors.append(farge)
+	if ikke_koblet:
+		chart_labels.append('Ikke koblet til service offering')
+		chart_data.append(ikke_koblet)
+		chart_colors.append('#bdc3c7')
+	if not chart_data:
+		return None
+	return {
+		'labels': chart_labels,
+		'data': chart_data,
+		'colors': chart_colors,
+	}
+
+
+def _driftsmodell_plattform_graf(plattformer_by_pk, systemtall_per_plattform, current_pk=None):
+	# 2026-11-05: Platform graph for detaljer (neighborhood) and alle (full map).
+	nodes = []
+	edges = []
+	for plattform in plattformer_by_pk.values():
+		antall = systemtall_per_plattform.get(plattform.pk, 0)
+		virk = ''
+		if plattform.ansvarlig_virksomhet and plattform.ansvarlig_virksomhet.virksomhetsforkortelse:
+			virk = plattform.ansvarlig_virksomhet.virksomhetsforkortelse
+		label_parts = [plattform.navn]
+		if virk:
+			label_parts.append(f'({virk})')
+		label_parts.append(f'{antall} system{"er" if antall != 1 else ""}')
+		er_valgt = current_pk is not None and plattform.pk == current_pk
+		nodes.append({
+			'data': {
+				'id': f'drift_{plattform.pk}',
+				'name': '\n'.join(label_parts),
+				'plattform_navn': plattform.navn,
+				'virksomhet': virk,
+				'system_count': antall,
+				'is_current': er_valgt,
+				'shape': 'roundrectangle',
+				'color': (
+					SYSTEM_COLORS['chart_current_system']
+					if er_valgt
+					else _driftsmodell_plattform_farge(plattform)
+				),
+				'href': reverse('detaljer_driftsmodell', kwargs={'pk': plattform.pk}),
+			}
+		})
+		if plattform.overordnet_plattform_id and plattform.overordnet_plattform_id in plattformer_by_pk:
+			edges.append({
+				'data': {
+					'id': f'edge_{plattform.pk}_{plattform.overordnet_plattform_id}',
+					'source': f'drift_{plattform.pk}',
+					'target': f'drift_{plattform.overordnet_plattform_id}',
+					'linestyle': 'solid',
+					'linecolor': '#888',
+					'linewidth': 2,
+					'label': 'kjører på',
+				}
+			})
+	return {'nodes': nodes, 'edges': edges}
+
+
 def detaljer_driftsmodell(request, pk):
 	#Vise detaljer om en valgt driftsmodell (inkl. systemer tilknyttet)
+	# 2026-11-05: Cytoscape platform neighborhood + Chart.js D1–D5 counts + virksomhet tags.
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render_access_denied(request, required_permissions)
 
-	driftsmodell = Driftsmodell.objects.get(pk=pk)
-	systemer = System.objects.filter(driftsmodell_foreignkey=pk).filter(~Q(livslop_status=7))
+	driftsmodell = get_object_or_404(
+		Driftsmodell.objects.select_related(
+			'ansvarlig_virksomhet',
+			'overordnet_plattform',
+			'overordnet_plattform__ansvarlig_virksomhet',
+		).prefetch_related(
+			Prefetch(
+				'driftsmodell_overordnet_plattform',
+				queryset=Driftsmodell.objects.select_related('ansvarlig_virksomhet').order_by('navn'),
+			),
+			'leverandor',
+			'underleverandorer',
+			'avtaler',
+		),
+		pk=pk,
+	)
+	systemer = (
+		System.objects.filter(driftsmodell_foreignkey=pk)
+		.filter(~Q(livslop_status=7))
+		.prefetch_related('service_offerings')
+	)
 	isolert_drift = systemer.filter(isolert_drift=True)
+
+	chart_kritikalitet = _driftsmodell_kritikalitet_chart(systemer)
+
+	relaterte_pks = _driftsmodell_relaterte_plattform_pks(driftsmodell)
+	plattformer_by_pk = {
+		p.pk: p
+		for p in Driftsmodell.objects.filter(pk__in=relaterte_pks).select_related('ansvarlig_virksomhet')
+	}
+	# Ensure the selected instance (with prefetched children) is the graph focus object.
+	plattformer_by_pk[driftsmodell.pk] = driftsmodell
+
+	systemtall_per_plattform = {
+		row['driftsmodell_foreignkey']: row['antall']
+		for row in (
+			System.objects.filter(driftsmodell_foreignkey__in=relaterte_pks)
+			.filter(~Q(livslop_status=7))
+			.values('driftsmodell_foreignkey')
+			.annotate(antall=Count('id'))
+		)
+	}
+
+	plattform_graf = _driftsmodell_plattform_graf(
+		plattformer_by_pk, systemtall_per_plattform, current_pk=driftsmodell.pk
+	)
+	underplattformer = list(driftsmodell.driftsmodell_overordnet_plattform.all())
 
 	return render(request, 'driftsmodell_detaljer.html', {
 		'request': request,
@@ -12657,6 +12880,10 @@ def detaljer_driftsmodell(request, pk):
 		'driftsmodell': driftsmodell,
 		'systemer': systemer,
 		'isolert_drift': isolert_drift,
+		'chart_kritikalitet': chart_kritikalitet,
+		'plattform_graf': plattform_graf,
+		'underplattformer': underplattformer,
+		'system_colors': SYSTEM_COLORS,
 	})
 
 

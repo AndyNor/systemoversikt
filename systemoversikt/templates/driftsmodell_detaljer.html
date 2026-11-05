@@ -1,131 +1,284 @@
+{# 2026-11-05: Cytoscape platform hierarchy + Chart.js kritikalitet doughnut + virksomhet tags. #}
 {% extends "system_index.html" %}
-
 {% load humanize %}
-
 {% load static %}
-
 {% load templatetags %}
 
-
-
-{% block underoverskrift %}
-
+{% block overskrift %}
 	{{ driftsmodell.navn }}
+	{% if driftsmodell.ansvarlig_virksomhet %}
+		{% url 'driftsmodell_virksomhet' pk=driftsmodell.ansvarlig_virksomhet.pk as url_ansvarlig %}
+		<a href="{{ url_ansvarlig }}" class="badge badge-light border driftsmodell-virksomhet-tag" title="{{ driftsmodell.ansvarlig_virksomhet }}">{{ driftsmodell.ansvarlig_virksomhet.virksomhetsforkortelse }}</a>
+	{% endif %}
+{% endblock overskrift %}
 
-{% endblock underoverskrift %}
+{% block ekstrajavascript %}
+	<script src="{% static 'cytoscape/cytoscape.min.js@3.9.4' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/numeric.min.js@1.2.6' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/layout-base.js@1.0.1' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/cose-base.js@1.0.1' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/cytoscape-layout-utilities.js@1.0.0' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/cytoscape-fcose.js' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'driftsmodell_plattform_graph.js' %}?v=20261105" nonce="{{request.csp_nonce}}"></script>
+	{% if chart_kritikalitet %}
+	<script src="{% static 'chart.js@2.8.0' %}" nonce="{{request.csp_nonce}}"></script>
+	{% endif %}
+{% endblock ekstrajavascript %}
 
+{% block ekstrastyle %}
+<style nonce="{{ request.csp_nonce }}">
+.driftsmodell-virksomhet-tag {
+	font-size: 0.7rem;
+	font-weight: 600;
+	vertical-align: middle;
+	letter-spacing: 0.02em;
+	text-decoration: none;
+	color: #333;
+}
+.driftsmodell-virksomhet-tag:hover {
+	background: #e9ecef;
+	text-decoration: none;
+}
+.driftsmodell-panel {
+	background: #fff;
+	border: 1px solid #e4e2ef;
+	border-radius: 12px;
+	padding: 1rem 1.1rem;
+	margin-bottom: 1rem;
+}
+.driftsmodell-panel h5 {
+	margin-bottom: 0.75rem;
+	font-size: 0.95rem;
+	color: #2A2859;
+}
+.driftsmodell-meta dt {
+	font-size: 0.75rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: #888;
+	margin-bottom: 0.15rem;
+}
+.driftsmodell-meta dd {
+	margin: 0 0 0.75rem;
+}
+#driftsmodell_cy {
+	background-color: #FCFCFC;
+	border: 1px solid #d6d4d4;
+	width: 100%;
+	height: 360px;
+}
+.driftsmodell-legend span {
+	margin-right: 1rem;
+	font-size: 0.88rem;
+}
+.driftsmodell-legend-dot {
+	height: 14px;
+	width: 14px;
+	border-radius: 3px;
+	display: inline-block;
+	vertical-align: middle;
+	margin-right: 0.25rem;
+	border: 1px solid #ccc;
+}
+.driftsmodell-chart-wrap {
+	max-width: 320px;
+	margin: 0 auto;
+	height: 240px;
+}
+</style>
+{% endblock ekstrastyle %}
 
-
-{% block main_content %}
-
-
+{% block hovedinnhold %}
 
 <p>
-
+	{% url 'alle_driftsmodeller' as url_alle %}
+	<a href="{{ url_alle }}" class="btn btn-sm btn-link">← Alle driftsplattformer</a>
 	{% if user.is_authenticated %}
-
-	<a class="btn btn-sm btn-primary"href="/admin/systemoversikt/driftsmodell/{{ driftsmodell.pk }}/change/">Rediger detaljer</a>
-
+	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/driftsmodell/{{ driftsmodell.pk }}/change/">{% include 'site_edit_button.html' %} Rediger detaljer</a>
 	{% endif %}
-
 </p>
 
-
-
-<div class="card">
-
-	<div class="card-body">
-
-		<h6>{{ driftsmodell.kommentar|default:"-"|linebreaks }}</h6>
-
+<div class="row">
+	<div class="col-md-8">
+		<div class="driftsmodell-panel">
+			<h5>Hvordan plattformene henger sammen</h5>
+			<p class="small text-muted mb-2">
+				Piler viser «kjører på» (underordnet → overordnet). Valgt plattform er uthevet. Klikk en annen plattform for å åpne den.
+			</p>
+			<p class="driftsmodell-legend mb-2">
+				<span><span class="driftsmodell-legend-dot" style="background-color: {{ system_colors.chart_current_system }}; border-color: #2A2859;"></span>Valgt plattform</span>
+				<span><span class="driftsmodell-legend-dot" style="background-color: {{ system_colors.drift_uke_privat }};"></span>Privat datasenter</span>
+				<span><span class="driftsmodell-legend-dot" style="background-color: {{ system_colors.drift_uke_sky }};"></span>Offentlig sky</span>
+				<span><span class="driftsmodell-legend-dot" style="background-color: {{ system_colors.saas }};"></span>SaaS</span>
+				<span><span class="driftsmodell-legend-dot" style="background-color: {{ system_colors.samarbeidspartner }};"></span>Samarbeidspartner</span>
+			</p>
+			<div id="driftsmodell_cy"></div>
+			{% if plattform_graf.nodes|length < 2 %}
+			<p class="small text-muted mt-2 mb-0">Ingen overordnet eller underliggende plattform er registrert for denne driftsmodellen.</p>
+			{% endif %}
+			<button id="btn-driftsmodell-plattform-graph-reset" type="button" class="btn btn-sm btn-outline-secondary mt-2">Tilbakestill visning</button>
+		</div>
 	</div>
-
+	<div class="col-md-4">
+		<div class="driftsmodell-panel">
+			<h5>Systemer etter driftskritikalitet</h5>
+			<p class="small text-muted">Antall systemer på denne plattformen fordelt på D1–D5 (laveste D-verdi ved flere koblinger). Samme kilde som systemprioritering.</p>
+			{% if chart_kritikalitet %}
+			<div class="driftsmodell-chart-wrap">
+				<canvas id="driftsmodell_kritikalitet_chart"></canvas>
+			</div>
+			{% else %}
+			<p class="mb-0 text-muted">Ingen systemer å fordele.</p>
+			{% endif %}
+		</div>
+		<div class="driftsmodell-panel">
+			<h5>Ansvar og hierarki</h5>
+			<dl class="driftsmodell-meta mb-0">
+				<dt>Ansvarlig virksomhet</dt>
+				<dd>
+					{% if driftsmodell.ansvarlig_virksomhet %}
+						{% url 'driftsmodell_virksomhet' pk=driftsmodell.ansvarlig_virksomhet.pk as url_ansvarlig %}
+						<a href="{{ url_ansvarlig }}" class="badge badge-light border driftsmodell-virksomhet-tag" title="{{ driftsmodell.ansvarlig_virksomhet }}">{{ driftsmodell.ansvarlig_virksomhet.virksomhetsforkortelse }}</a>
+						<span class="small text-muted">{{ driftsmodell.ansvarlig_virksomhet.virksomhetsnavn }}</span>
+					{% else %}
+						–
+					{% endif %}
+				</dd>
+				<dt>Overordnet plattform</dt>
+				<dd>
+					{% if driftsmodell.overordnet_plattform %}
+						{% url 'detaljer_driftsmodell' pk=driftsmodell.overordnet_plattform.pk as url_overordnet %}
+						<a href="{{ url_overordnet }}">{{ driftsmodell.overordnet_plattform.navn }}</a>
+						{% if driftsmodell.overordnet_plattform.ansvarlig_virksomhet %}
+							{% url 'driftsmodell_virksomhet' pk=driftsmodell.overordnet_plattform.ansvarlig_virksomhet.pk as url_over_virk %}
+							<a href="{{ url_over_virk }}" class="badge badge-light border driftsmodell-virksomhet-tag" title="{{ driftsmodell.overordnet_plattform.ansvarlig_virksomhet }}">{{ driftsmodell.overordnet_plattform.ansvarlig_virksomhet.virksomhetsforkortelse }}</a>
+						{% endif %}
+					{% else %}
+						–
+					{% endif %}
+				</dd>
+				<dt>Underplattformer</dt>
+				<dd>
+					{% for barn in underplattformer %}
+						{% url 'detaljer_driftsmodell' pk=barn.pk as url_barn %}
+						<div class="mb-1">
+							<a href="{{ url_barn }}">{{ barn.navn }}</a>
+							{% if barn.ansvarlig_virksomhet %}
+								{% url 'driftsmodell_virksomhet' pk=barn.ansvarlig_virksomhet.pk as url_barn_virk %}
+								<a href="{{ url_barn_virk }}" class="badge badge-light border driftsmodell-virksomhet-tag" title="{{ barn.ansvarlig_virksomhet }}">{{ barn.ansvarlig_virksomhet.virksomhetsforkortelse }}</a>
+							{% endif %}
+						</div>
+					{% empty %}
+						–
+					{% endfor %}
+				</dd>
+			</dl>
+		</div>
+	</div>
 </div>
 
-
+{% if driftsmodell.kommentar %}
+<div class="driftsmodell-panel">
+	<h5>Kommentar</h5>
+	<div>{{ driftsmodell.kommentar|linebreaks }}</div>
+</div>
+{% endif %}
 
 <hr>
-
-
 
 <h6>Systemer registrert på driftsmodellen ({{ systemer.count }})</h6>
-
 {% include "system_include_hurtigvisning.html" with systemer=systemer %}
 
-
-
 <h6>Systemer på isolert drift ({{ isolert_drift.count|default:0 }})</h6>
-
 {% include "system_include_hurtigvisning.html" with systemer=isolert_drift %}
-
-
 
 <hr>
 
-
-
 <h6>Generelt</h6>
-
 <table class="tablesorter">
-
 	<tr>
-
 		<td width="30%">{% get_verbose_field_name driftsmodell "leverandor" %}</td>
-
 		<td>
-
 			{% for leverandor in driftsmodell.leverandor.all %}
-
 				{% url 'leverandor' leverandor.pk as url_leverandor %}
-
 				<a href="{{ url_leverandor }}">{{ leverandor }}</a><br>
-
 			{% endfor %}
-
 		</td>
-
 	</tr>
-
 	<tr>
-
 		<td width="30%">{% get_verbose_field_name driftsmodell "underleverandorer" %}</td>
-
 		<td>
-
 			{% for leverandor in driftsmodell.underleverandorer.all %}
-
 				{% url 'leverandor' leverandor.pk as url_leverandor %}
-
 				<a href="{{ url_leverandor }}">{{ leverandor }}</a><br>
-
 			{% endfor %}
-
 		</td>
-
 	</tr>
-
 	<tr>
-
 		<td>{% get_verbose_field_name driftsmodell "avtaler" %}</td>
-
 		<td>
-
 			{% for avtale in driftsmodell.avtaler.all %}
-
 				{% url 'avtaledetaljer' avtale.pk as avtale_url %}
-
 				<a href="{{ avtale_url }}">{{ avtale }}</a><br>
-
 			{% endfor %}
-
 		</td>
-
 	</tr>
-
 </table>
 
+{% endblock hovedinnhold %}
 
+{% block script_append %}
+{{ plattform_graf|json_script:"driftsmodell_plattform_graphElements" }}
+{% if chart_kritikalitet %}
+{{ chart_kritikalitet|json_script:"driftsmodell-kritikalitet-data" }}
+{% endif %}
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+document.addEventListener('DOMContentLoaded', function () {
+	const graphData = JSON.parse(
+		document.getElementById('driftsmodell_plattform_graphElements').textContent
+	);
+	window.initDriftsmodellPlattformGraph({
+		graphElements: {
+			nodes: graphData.nodes || [],
+			edges: graphData.edges || [],
+		},
+	});
 
-{% endblock main_content %}
-
-
+	{% if chart_kritikalitet %}
+	const chartData = JSON.parse(
+		document.getElementById('driftsmodell-kritikalitet-data').textContent
+	);
+	new Chart(document.getElementById('driftsmodell_kritikalitet_chart'), {
+		type: 'doughnut',
+		data: {
+			labels: chartData.labels,
+			datasets: [{
+				data: chartData.data,
+				backgroundColor: chartData.colors,
+			}],
+		},
+		options: {
+			maintainAspectRatio: false,
+			legend: {
+				display: true,
+				position: 'bottom',
+				labels: {
+					boxWidth: 12,
+					fontSize: 11,
+				},
+			},
+			tooltips: {
+				callbacks: {
+					label: function (item, data) {
+						var label = data.labels[item.index] || '';
+						var value = data.datasets[0].data[item.index];
+						return label + ': ' + value + ' system' + (value === 1 ? '' : 'er');
+					},
+				},
+			},
+		},
+	});
+	{% endif %}
+});
+</script>
+{% endblock script_append %}

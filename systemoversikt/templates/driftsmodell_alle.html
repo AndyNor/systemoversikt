@@ -1,201 +1,287 @@
+{# 2026-11-05: Full platform Cytoscape map + aggregate kritikalitet doughnut + virksomhet tags. #}
 {% extends "system_index.html" %}
-
 {% load humanize %}
-
 {% load static %}
-
 {% load templatetags %}
 
-
-
 {% block overskrift %}
-
 	Driftsplattformer (landingssoner)
-
 {% endblock overskrift %}
 
+{% block ekstrajavascript %}
+	<script src="{% static 'cytoscape/cytoscape.min.js@3.9.4' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/numeric.min.js@1.2.6' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/layout-base.js@1.0.1' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/cose-base.js@1.0.1' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/cytoscape-layout-utilities.js@1.0.0' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/cytoscape-fcose.js' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'driftsmodell_plattform_graph.js' %}?v=20261105-alle" nonce="{{request.csp_nonce}}"></script>
+	{% if chart_kritikalitet %}
+	<script src="{% static 'chart.js@2.8.0' %}" nonce="{{request.csp_nonce}}"></script>
+	{% endif %}
+{% endblock ekstrajavascript %}
 
+{% block ekstrastyle %}
+<style nonce="{{ request.csp_nonce }}">
+.driftsmodell-virksomhet-tag {
+	font-size: 0.7rem;
+	font-weight: 600;
+	vertical-align: middle;
+	letter-spacing: 0.02em;
+	text-decoration: none;
+	color: #333;
+}
+.driftsmodell-virksomhet-tag:hover {
+	background: #e9ecef;
+	text-decoration: none;
+}
+.driftsmodell-panel {
+	background: #fff;
+	border: 1px solid #e4e2ef;
+	border-radius: 12px;
+	padding: 1rem 1.1rem;
+	margin-bottom: 1rem;
+}
+.driftsmodell-panel h5 {
+	margin-bottom: 0.75rem;
+	font-size: 0.95rem;
+	color: #2A2859;
+}
+#driftsmodell_alle_cy {
+	background-color: #FCFCFC;
+	border: 1px solid #d6d4d4;
+	width: 100%;
+	height: 520px;
+}
+.driftsmodell-legend span {
+	margin-right: 1rem;
+	font-size: 0.88rem;
+}
+.driftsmodell-legend-dot {
+	height: 14px;
+	width: 14px;
+	border-radius: 3px;
+	display: inline-block;
+	vertical-align: middle;
+	margin-right: 0.25rem;
+	border: 1px solid #ccc;
+}
+.driftsmodell-chart-wrap {
+	max-width: 320px;
+	margin: 0 auto;
+	height: 260px;
+}
+.driftsmodell-virksomhet-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+}
+</style>
+{% endblock ekstrastyle %}
 
 {% block hovedinnhold %}
 
-	<p>En driftsplattform er en spesifikk infrastruktur hvor systemkomponenter kan driftes. Alle driftsplattformer skal kobles til ansvarlig virksomhet i kommunen, og alle systemer skal kobles mot en av disse driftsplattformene. Dersom systemet tilhører flere driftsmodeller, kan du velge den som er mest fremtredende, eller splitte systemregistreringen inn i flere systemkomponenter fordelt riktig på driftsplattform. Trykk på en driftsplattform for å se alle systemer som er tilknyttet.</p>
+<p>En driftsplattform er en spesifikk infrastruktur hvor systemkomponenter kan driftes. Alle driftsplattformer skal kobles til ansvarlig virksomhet i kommunen, og alle systemer skal kobles mot en av disse driftsplattformene. Dersom systemet tilhører flere driftsmodeller, kan du velge den som er mest fremtredende, eller splitte systemregistreringen inn i flere systemkomponenter fordelt riktig på driftsplattform. Trykk på en driftsplattform for å se alle systemer som er tilknyttet.</p>
 
+<div class="row">
+	<div class="col-md-8">
+		<div class="driftsmodell-panel">
+			<h5>Hvordan plattformene henger sammen</h5>
+			<p class="small text-muted mb-2">
+				Piler viser «kjører på» (underordnet → overordnet). Nodestørrelse følger antall systemer. Klikk en plattform for detaljer.
+			</p>
+			{% if ansvarlige_virksomheter %}
+			<p class="small mb-2">
+				<span class="text-muted mr-1">Ansvarlige virksomheter:</span>
+				<span class="driftsmodell-virksomhet-tags">
+				{% for v in ansvarlige_virksomheter %}
+					{% url 'driftsmodell_virksomhet' pk=v.pk as url_virk %}
+					<a href="{{ url_virk }}" class="badge badge-light border driftsmodell-virksomhet-tag" title="{{ v }}">{{ v.virksomhetsforkortelse }}</a>
+				{% endfor %}
+				</span>
+			</p>
+			{% endif %}
+			<p class="driftsmodell-legend mb-2">
+				<span><span class="driftsmodell-legend-dot" style="background-color: {{ system_colors.drift_uke_privat }};"></span>Privat datasenter</span>
+				<span><span class="driftsmodell-legend-dot" style="background-color: {{ system_colors.drift_uke_sky }};"></span>Offentlig sky</span>
+				<span><span class="driftsmodell-legend-dot" style="background-color: {{ system_colors.saas }};"></span>SaaS</span>
+				<span><span class="driftsmodell-legend-dot" style="background-color: {{ system_colors.samarbeidspartner }};"></span>Samarbeidspartner</span>
+				<span><span class="driftsmodell-legend-dot" style="background-color: {{ system_colors.ukjent }};"></span>Ukjent</span>
+			</p>
+			<div id="driftsmodell_alle_cy"></div>
+			<button id="btn-driftsmodell-alle-graph-reset" type="button" class="btn btn-sm btn-outline-secondary mt-2">Tilbakestill visning</button>
+		</div>
+	</div>
+	<div class="col-md-4">
+		<div class="driftsmodell-panel">
+			<h5>Systemer etter driftskritikalitet</h5>
+			<p class="small text-muted">Alle systemer med driftsplattform, fordelt på D1–D5 (laveste D-verdi ved flere koblinger). Samme kilde som systemprioritering.</p>
+			{% if chart_kritikalitet %}
+			<div class="driftsmodell-chart-wrap">
+				<canvas id="driftsmodell_alle_kritikalitet_chart"></canvas>
+			</div>
+			{% else %}
+			<p class="mb-0 text-muted">Ingen systemer å fordele.</p>
+			{% endif %}
+		</div>
+	</div>
+</div>
 
+<hr>
 
-	<table class="tablesorter excel">
-
-		<thead>
-
-		<tr>
-
-			<th>Plattform/tenant</th>
-
-			<th>{% get_verbose_field_name driftsmodell_felt_referanse "sort_order" %}</th>
-
-			<th>Antall systemer</th>
-
-			<th>Nivå</th>
-
-			<th>{% get_verbose_field_name driftsmodell_felt_referanse "ansvarlig_virksomhet" %}</th>
-
-			<th>{% get_verbose_field_name driftsmodell_felt_referanse "overordnet_plattform" %}</th>
-
-			<th>{% get_verbose_field_name driftsmodell_felt_referanse "type_plattform" %}</th>
-
-			<th>{% get_verbose_field_name driftsmodell_felt_referanse "er_saas" %}</th>
-
-			<th>{% get_verbose_field_name driftsmodell_felt_referanse "utviklingsplattform" %}</th>
-
-			<th>{% get_verbose_field_name driftsmodell_felt_referanse "samarbeidspartner" %}</th>
-
-			<th>{% get_verbose_field_name driftsmodell_felt_referanse "leverandor" %}</th>
-
-			<th>{% get_verbose_field_name driftsmodell_felt_referanse "underleverandorer" %}</th>
-
-			<th>{% get_verbose_field_name driftsmodell_felt_referanse "applikasjonsdriftleverandor" %}</th>
-
-			<th>{% get_verbose_field_name driftsmodell_felt_referanse "avtaler" %}</th>
-
-			<th>{% get_verbose_field_name driftsmodell_felt_referanse "kommentar" %}</th>
-
-			<th>{% get_verbose_field_name driftsmodell_felt_referanse "sist_oppdatert" %}</th>
-
-		</tr>
-
-		</thead>
-
-		<tbody>
-
-		{% for item in driftsmodeller %}
-
-		<tr>
-
-
-
-			<td>
-
-				<a href="/admin/systemoversikt/driftsmodell/{{ item.pk }}/change/">{% include 'site_edit_button.html' %}</a>
-
-				{% url 'detaljer_driftsmodell' pk=item.pk as url_detaljer_driftsmodell %}
-
-				<a href="{{ url_detaljer_driftsmodell }}">{{ item }}</a>
-
-			</td>
-
-			<td>{{ item.sort_order }}</td>
-
-			<td>{{ item.antall_systemer }}</td>
-
-			<td>{{ item.plattform_nivaa }}</td>
-
-			<td>
-
-				{% if item.ansvarlig_virksomhet %}
-
-					{% url 'driftsmodell_virksomhet' pk=item.ansvarlig_virksomhet.pk as url_detaljer_virksomhet %}
-
-					<a href="{{ url_detaljer_virksomhet }}">{{ item.ansvarlig_virksomhet }}</a>
-
-				{% else %}
-
-					-
-
+<table class="tablesorter excel">
+	<thead>
+	<tr>
+		<th>Plattform/tenant</th>
+		<th>{% get_verbose_field_name driftsmodell_felt_referanse "sort_order" %}</th>
+		<th>Antall systemer</th>
+		<th>Nivå</th>
+		<th>{% get_verbose_field_name driftsmodell_felt_referanse "ansvarlig_virksomhet" %}</th>
+		<th>{% get_verbose_field_name driftsmodell_felt_referanse "overordnet_plattform" %}</th>
+		<th>{% get_verbose_field_name driftsmodell_felt_referanse "type_plattform" %}</th>
+		<th>{% get_verbose_field_name driftsmodell_felt_referanse "er_saas" %}</th>
+		<th>{% get_verbose_field_name driftsmodell_felt_referanse "utviklingsplattform" %}</th>
+		<th>{% get_verbose_field_name driftsmodell_felt_referanse "samarbeidspartner" %}</th>
+		<th>{% get_verbose_field_name driftsmodell_felt_referanse "leverandor" %}</th>
+		<th>{% get_verbose_field_name driftsmodell_felt_referanse "underleverandorer" %}</th>
+		<th>{% get_verbose_field_name driftsmodell_felt_referanse "applikasjonsdriftleverandor" %}</th>
+		<th>{% get_verbose_field_name driftsmodell_felt_referanse "avtaler" %}</th>
+		<th>{% get_verbose_field_name driftsmodell_felt_referanse "kommentar" %}</th>
+		<th>{% get_verbose_field_name driftsmodell_felt_referanse "sist_oppdatert" %}</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for item in driftsmodeller %}
+	<tr>
+		<td>
+			<a href="/admin/systemoversikt/driftsmodell/{{ item.pk }}/change/">{% include 'site_edit_button.html' %}</a>
+			{% url 'detaljer_driftsmodell' pk=item.pk as url_detaljer_driftsmodell %}
+			<a href="{{ url_detaljer_driftsmodell }}">{{ item.navn }}</a>
+			{% if item.ansvarlig_virksomhet %}
+				{% url 'driftsmodell_virksomhet' pk=item.ansvarlig_virksomhet.pk as url_detaljer_virksomhet %}
+				<a href="{{ url_detaljer_virksomhet }}" class="badge badge-light border driftsmodell-virksomhet-tag" title="{{ item.ansvarlig_virksomhet }}">{{ item.ansvarlig_virksomhet.virksomhetsforkortelse }}</a>
+			{% endif %}
+		</td>
+		<td>{{ item.sort_order }}</td>
+		<td>{{ item.antall_systemer }}</td>
+		<td>{{ item.plattform_nivaa }}</td>
+		<td>
+			{% if item.ansvarlig_virksomhet %}
+				{% url 'driftsmodell_virksomhet' pk=item.ansvarlig_virksomhet.pk as url_detaljer_virksomhet %}
+				<a href="{{ url_detaljer_virksomhet }}" class="badge badge-light border driftsmodell-virksomhet-tag" title="{{ item.ansvarlig_virksomhet }}">{{ item.ansvarlig_virksomhet.virksomhetsforkortelse }}</a>
+			{% else %}
+				-
+			{% endif %}
+		</td>
+		<td>
+			{% if item.overordnet_plattform %}
+				{% url 'detaljer_driftsmodell' pk=item.overordnet_plattform.pk as url_overordnet %}
+				<a href="{{ url_overordnet }}">{{ item.overordnet_plattform.navn }}</a>
+				{% if item.overordnet_plattform.ansvarlig_virksomhet %}
+					{% url 'driftsmodell_virksomhet' pk=item.overordnet_plattform.ansvarlig_virksomhet.pk as url_over_virk %}
+					<a href="{{ url_over_virk }}" class="badge badge-light border driftsmodell-virksomhet-tag" title="{{ item.overordnet_plattform.ansvarlig_virksomhet }}">{{ item.overordnet_plattform.ansvarlig_virksomhet.virksomhetsforkortelse }}</a>
 				{% endif %}
-
-			</td>
-
-			<td>
-
-				{% if item.overordnet_plattform %}
-
-					{% url 'detaljer_driftsmodell' pk=item.overordnet_plattform.pk as url_overordnet %}
-
-					<a href="{{ url_overordnet }}">{{ item.overordnet_plattform }}</a>
-
-				{% else %}
-
-					-
-
-				{% endif %}
-
-			</td>
-
-			<td>{{ item.get_type_plattform_display }}</td>
-
-			<td>{{ item.er_saas|yesno:"Ja,Nei" }}</td>
-
-			<td>{{ item.utviklingsplattform|yesno:"Ja,Nei" }}</td>
-
-			<td>{{ item.samarbeidspartner|yesno:"Ja,Nei" }}</td>
-
-			<td>
-
-				{% for leverandor in item.leverandor.all %}
-
-					{% url 'leverandor' leverandor.pk as url_leverandor %}
-
-					<a href="{{ url_leverandor }}">{{ leverandor }}</a>{% if not forloop.last %}<br>{% endif %}
-
-				{% empty %}-{% endfor %}
-
-			</td>
-
-			<td>
-
-				{% for leverandor in item.underleverandorer.all %}
-
-					{% url 'leverandor' leverandor.pk as url_leverandor %}
-
-					<a href="{{ url_leverandor }}">{{ leverandor }}</a>{% if not forloop.last %}<br>{% endif %}
-
-				{% empty %}-{% endfor %}
-
-			</td>
-
-			<td>
-
-				{% if item.applikasjonsdriftleverandor %}
-
-					{% url 'leverandor' item.applikasjonsdriftleverandor.pk as url_leverandor %}
-
-					<a href="{{ url_leverandor }}">{{ item.applikasjonsdriftleverandor }}</a>
-
-				{% else %}
-
-					-
-
-				{% endif %}
-
-			</td>
-
-			<td>
-
-				{% for avtale in item.avtaler.all %}
-
-					{% url 'avtaledetaljer' avtale.pk as avtale_url %}
-
-					<a href="{{ avtale_url }}">{{ avtale }}</a>{% if not forloop.last %}<br>{% endif %}
-
-				{% empty %}-{% endfor %}
-
-			</td>
-
-			<td>{{ item.kommentar|default:"-"|linebreaksbr }}</td>
-
-			<td>{{ item.sist_oppdatert|naturaltime }}</td>
-
-
-
-		</tr>
-
-		{% endfor %}
-
-		</tbody>
-
-	</table>
-
-
+			{% else %}
+				-
+			{% endif %}
+		</td>
+		<td>{{ item.get_type_plattform_display }}</td>
+		<td>{{ item.er_saas|yesno:"Ja,Nei" }}</td>
+		<td>{{ item.utviklingsplattform|yesno:"Ja,Nei" }}</td>
+		<td>{{ item.samarbeidspartner|yesno:"Ja,Nei" }}</td>
+		<td>
+			{% for leverandor in item.leverandor.all %}
+				{% url 'leverandor' leverandor.pk as url_leverandor %}
+				<a href="{{ url_leverandor }}">{{ leverandor }}</a>{% if not forloop.last %}<br>{% endif %}
+			{% empty %}-{% endfor %}
+		</td>
+		<td>
+			{% for leverandor in item.underleverandorer.all %}
+				{% url 'leverandor' leverandor.pk as url_leverandor %}
+				<a href="{{ url_leverandor }}">{{ leverandor }}</a>{% if not forloop.last %}<br>{% endif %}
+			{% empty %}-{% endfor %}
+		</td>
+		<td>
+			{% if item.applikasjonsdriftleverandor %}
+				{% url 'leverandor' item.applikasjonsdriftleverandor.pk as url_leverandor %}
+				<a href="{{ url_leverandor }}">{{ item.applikasjonsdriftleverandor }}</a>
+			{% else %}
+				-
+			{% endif %}
+		</td>
+		<td>
+			{% for avtale in item.avtaler.all %}
+				{% url 'avtaledetaljer' avtale.pk as avtale_url %}
+				<a href="{{ avtale_url }}">{{ avtale }}</a>{% if not forloop.last %}<br>{% endif %}
+			{% empty %}-{% endfor %}
+		</td>
+		<td>{{ item.kommentar|default:"-"|linebreaksbr }}</td>
+		<td>{{ item.sist_oppdatert|naturaltime }}</td>
+	</tr>
+	{% endfor %}
+	</tbody>
+</table>
 
 {% endblock hovedinnhold %}
 
+{% block script_append %}
+{{ plattform_graf|json_script:"driftsmodell_alle_plattform_graphElements" }}
+{% if chart_kritikalitet %}
+{{ chart_kritikalitet|json_script:"driftsmodell-alle-kritikalitet-data" }}
+{% endif %}
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+document.addEventListener('DOMContentLoaded', function () {
+	const graphData = JSON.parse(
+		document.getElementById('driftsmodell_alle_plattform_graphElements').textContent
+	);
+	window.initDriftsmodellPlattformGraph({
+		containerId: 'driftsmodell_alle_cy',
+		resetBtnId: 'btn-driftsmodell-alle-graph-reset',
+		scaleByCount: true,
+		idealEdgeLength: 160,
+		nodeSeparation: 110,
+		numIter: 40000,
+		graphElements: {
+			nodes: graphData.nodes || [],
+			edges: graphData.edges || [],
+		},
+	});
 
+	{% if chart_kritikalitet %}
+	const chartData = JSON.parse(
+		document.getElementById('driftsmodell-alle-kritikalitet-data').textContent
+	);
+	new Chart(document.getElementById('driftsmodell_alle_kritikalitet_chart'), {
+		type: 'doughnut',
+		data: {
+			labels: chartData.labels,
+			datasets: [{
+				data: chartData.data,
+				backgroundColor: chartData.colors,
+			}],
+		},
+		options: {
+			maintainAspectRatio: false,
+			legend: {
+				display: true,
+				position: 'bottom',
+				labels: {
+					boxWidth: 12,
+					fontSize: 11,
+				},
+			},
+			tooltips: {
+				callbacks: {
+					label: function (item, data) {
+						var label = data.labels[item.index] || '';
+						var value = data.datasets[0].data[item.index];
+						return label + ': ' + value + ' system' + (value === 1 ? '' : 'er');
+					},
+				},
+			},
+		},
+	});
+	{% endif %}
+});
+</script>
+{% endblock script_append %}
