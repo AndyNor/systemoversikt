@@ -1,4 +1,4 @@
-{# 2026-11-05: Full platform Cytoscape map + aggregate kritikalitet doughnut + virksomhet tags. #}
+{# 2026-11-05: Platform graph heat = tilgjengelighetsvurdering; count badges; no global doughnut. #}
 {% extends "system_index.html" %}
 {% load humanize %}
 {% load static %}
@@ -15,10 +15,7 @@
 	<script src="{% static 'cytoscape/cose-base.js@1.0.1' %}" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'cytoscape/cytoscape-layout-utilities.js@1.0.0' %}" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'cytoscape/cytoscape-fcose.js' %}" nonce="{{request.csp_nonce}}"></script>
-	<script src="{% static 'driftsmodell_plattform_graph.js' %}?v=20261105-alle" nonce="{{request.csp_nonce}}"></script>
-	{% if chart_kritikalitet %}
-	<script src="{% static 'chart.js@2.8.0' %}" nonce="{{request.csp_nonce}}"></script>
-	{% endif %}
+	<script src="{% static 'driftsmodell_plattform_graph.js' %}?v=20261105-badge-grad-layout" nonce="{{request.csp_nonce}}"></script>
 {% endblock ekstrajavascript %}
 
 {% block ekstrastyle %}
@@ -51,7 +48,7 @@
 	background-color: #FCFCFC;
 	border: 1px solid #d6d4d4;
 	width: 100%;
-	height: 520px;
+	height: 560px;
 }
 .driftsmodell-legend span {
 	margin-right: 1rem;
@@ -66,15 +63,40 @@
 	margin-right: 0.25rem;
 	border: 1px solid #ccc;
 }
-.driftsmodell-chart-wrap {
-	max-width: 320px;
-	margin: 0 auto;
-	height: 260px;
+.driftsmodell-legend-badge {
+	height: 18px;
+	width: 18px;
+	border-radius: 50%;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	vertical-align: middle;
+	margin-right: 0.25rem;
+	color: #1a1a1a;
+	font-size: 0.65rem;
+	font-weight: 700;
+	border: 1px solid #fff;
+	box-shadow: 0 0 0 1px #ccc;
 }
-.driftsmodell-virksomhet-tags {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 0.35rem;
+.driftsmodell-heat-scale {
+	display: inline-block;
+	width: 88px;
+	height: 12px;
+	vertical-align: middle;
+	margin: 0 0.35rem;
+	border: 1px solid #ccc;
+	border-radius: 2px;
+	background: linear-gradient(to right, #a8d5e5, #c0392b);
+}
+.driftsmodell-badge-scale {
+	display: inline-block;
+	width: 72px;
+	height: 12px;
+	vertical-align: middle;
+	margin: 0 0.35rem;
+	border: 1px solid #ccc;
+	border-radius: 6px;
+	background: linear-gradient(to right, #aed6f1, #f5b7b1);
 }
 </style>
 {% endblock ekstrastyle %}
@@ -83,48 +105,26 @@
 
 <p>En driftsplattform er en spesifikk infrastruktur hvor systemkomponenter kan driftes. Alle driftsplattformer skal kobles til ansvarlig virksomhet i kommunen, og alle systemer skal kobles mot en av disse driftsplattformene. Dersom systemet tilhører flere driftsmodeller, kan du velge den som er mest fremtredende, eller splitte systemregistreringen inn i flere systemkomponenter fordelt riktig på driftsplattform. Trykk på en driftsplattform for å se alle systemer som er tilknyttet.</p>
 
-<div class="row">
-	<div class="col-md-8">
-		<div class="driftsmodell-panel">
-			<h5>Hvordan plattformene henger sammen</h5>
-			<p class="small text-muted mb-2">
-				Piler viser «kjører på» (underordnet → overordnet). Nodestørrelse følger antall systemer. Klikk en plattform for detaljer.
-			</p>
-			{% if ansvarlige_virksomheter %}
-			<p class="small mb-2">
-				<span class="text-muted mr-1">Ansvarlige virksomheter:</span>
-				<span class="driftsmodell-virksomhet-tags">
-				{% for v in ansvarlige_virksomheter %}
-					{% url 'driftsmodell_virksomhet' pk=v.pk as url_virk %}
-					<a href="{{ url_virk }}" class="badge badge-light border driftsmodell-virksomhet-tag" title="{{ v }}">{{ v.virksomhetsforkortelse }}</a>
-				{% endfor %}
-				</span>
-			</p>
-			{% endif %}
-			<p class="driftsmodell-legend mb-2">
-				<span><span class="driftsmodell-legend-dot" style="background-color: {{ system_colors.drift_uke_privat }};"></span>Privat datasenter</span>
-				<span><span class="driftsmodell-legend-dot" style="background-color: {{ system_colors.drift_uke_sky }};"></span>Offentlig sky</span>
-				<span><span class="driftsmodell-legend-dot" style="background-color: {{ system_colors.saas }};"></span>SaaS</span>
-				<span><span class="driftsmodell-legend-dot" style="background-color: {{ system_colors.samarbeidspartner }};"></span>Samarbeidspartner</span>
-				<span><span class="driftsmodell-legend-dot" style="background-color: {{ system_colors.ukjent }};"></span>Ukjent</span>
-			</p>
-			<div id="driftsmodell_alle_cy"></div>
-			<button id="btn-driftsmodell-alle-graph-reset" type="button" class="btn btn-sm btn-outline-secondary mt-2">Tilbakestill visning</button>
-		</div>
-	</div>
-	<div class="col-md-4">
-		<div class="driftsmodell-panel">
-			<h5>Systemer etter driftskritikalitet</h5>
-			<p class="small text-muted">Alle systemer med driftsplattform, fordelt på D1–D5 (laveste D-verdi ved flere koblinger). Samme kilde som systemprioritering.</p>
-			{% if chart_kritikalitet %}
-			<div class="driftsmodell-chart-wrap">
-				<canvas id="driftsmodell_alle_kritikalitet_chart"></canvas>
-			</div>
-			{% else %}
-			<p class="mb-0 text-muted">Ingen systemer å fordele.</p>
-			{% endif %}
-		</div>
-	</div>
+<div class="driftsmodell-panel">
+	<h5>Hvordan plattformene henger sammen</h5>
+	<p class="small text-muted mb-2">
+		Piler viser «kjører på» (underordnet → overordnet). Nodefarge viser andel systemer med høy tilgjengelighetsvurdering (visning 4–5, der 5 er mest kritisk). Den runde badgen viser antall systemer (lyseblå = færrest, lyserød = flest). Klikk en plattform for detaljer.
+	</p>
+	<p class="driftsmodell-legend mb-2">
+		<span>
+			<span class="driftsmodell-heat-scale" title="Lav til høy andel med tilgjengelighetsvurdering 4–5"></span>
+			Node: lav → høy andel kritisk tilgjengelighet
+		</span>
+		<span><span class="driftsmodell-legend-dot" style="background-color: #E8E8E8;"></span>Ingen vurdering</span>
+		<span>
+			<span class="driftsmodell-badge-scale" title="Få til mange systemer"></span>
+			Badge: få → mange systemer
+		</span>
+	</p>
+	<div id="driftsmodell_alle_cy"></div>
+	{# 2026-11-05: Toggle collapses platforms whose name contains «lokal drift». #}
+	<button id="btn-driftsmodell-alle-group-lokal-drift" type="button" class="btn btn-sm btn-outline-primary mt-2 mr-2" aria-pressed="true">Vis lokal drift separat</button>
+	<button id="btn-driftsmodell-alle-graph-reset" type="button" class="btn btn-sm btn-outline-secondary mt-2">Tilbakestill visning</button>
 </div>
 
 <hr>
@@ -226,9 +226,6 @@
 
 {% block script_append %}
 {{ plattform_graf|json_script:"driftsmodell_alle_plattform_graphElements" }}
-{% if chart_kritikalitet %}
-{{ chart_kritikalitet|json_script:"driftsmodell-alle-kritikalitet-data" }}
-{% endif %}
 <script type="text/javascript" nonce="{{request.csp_nonce}}">
 document.addEventListener('DOMContentLoaded', function () {
 	const graphData = JSON.parse(
@@ -237,7 +234,9 @@ document.addEventListener('DOMContentLoaded', function () {
 	window.initDriftsmodellPlattformGraph({
 		containerId: 'driftsmodell_alle_cy',
 		resetBtnId: 'btn-driftsmodell-alle-graph-reset',
-		scaleByCount: true,
+		groupLokalDriftToggleId: 'btn-driftsmodell-alle-group-lokal-drift',
+		groupLokalDriftDefault: true,
+		showCountBadges: true,
 		idealEdgeLength: 160,
 		nodeSeparation: 110,
 		numIter: 40000,
@@ -246,42 +245,6 @@ document.addEventListener('DOMContentLoaded', function () {
 			edges: graphData.edges || [],
 		},
 	});
-
-	{% if chart_kritikalitet %}
-	const chartData = JSON.parse(
-		document.getElementById('driftsmodell-alle-kritikalitet-data').textContent
-	);
-	new Chart(document.getElementById('driftsmodell_alle_kritikalitet_chart'), {
-		type: 'doughnut',
-		data: {
-			labels: chartData.labels,
-			datasets: [{
-				data: chartData.data,
-				backgroundColor: chartData.colors,
-			}],
-		},
-		options: {
-			maintainAspectRatio: false,
-			legend: {
-				display: true,
-				position: 'bottom',
-				labels: {
-					boxWidth: 12,
-					fontSize: 11,
-				},
-			},
-			tooltips: {
-				callbacks: {
-					label: function (item, data) {
-						var label = data.labels[item.index] || '';
-						var value = data.datasets[0].data[item.index];
-						return label + ': ' + value + ' system' + (value === 1 ? '' : 'er');
-					},
-				},
-			},
-		},
-	});
-	{% endif %}
 });
 </script>
 {% endblock script_append %}

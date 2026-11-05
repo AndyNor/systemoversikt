@@ -12411,7 +12411,7 @@ def alle_leverandorer(request):
 
 def alle_driftsmodeller(request):
 	#Vise liste over alle driftsmodeller
-	# 2026-11-05: Full Cytoscape platform map + aggregate D1–D5 chart + virksomhet tags.
+	# 2026-11-05: Overview graph heat = tilgjengelighetsvurdering per platform; count badges; no global doughnut.
 	# 2026-06-22: Prefetch related fields and annotate system count – full model data on alle-page.
 	# 2026-06-22: Dropped lokasjon_lagring_valgmeny prefetch – field removed from model.
 	required_permissions = ['systemoversikt.view_system']
@@ -12437,25 +12437,14 @@ def alle_driftsmodeller(request):
 	systemtall_per_plattform = {
 		p.pk: p.antall_systemer for p in driftsmodeller
 	}
+	tilgjengelighet_stats = _driftsmodell_tilgjengelighet_stats_per_plattform()
 	plattform_graf = _driftsmodell_plattform_graf(
-		plattformer_by_pk, systemtall_per_plattform, current_pk=None
+		plattformer_by_pk,
+		systemtall_per_plattform,
+		current_pk=None,
+		tilgjengelighet_stats=tilgjengelighet_stats,
+		use_heat=True,
 	)
-
-	systemer_med_plattform = (
-		System.objects.filter(~Q(livslop_status=7))
-		.exclude(driftsmodell_foreignkey=None)
-		.prefetch_related('service_offerings')
-	)
-	chart_kritikalitet = _driftsmodell_kritikalitet_chart(systemer_med_plattform)
-
-	ansvarlige_virksomheter = []
-	sett_virk = set()
-	for p in driftsmodeller:
-		v = p.ansvarlig_virksomhet
-		if v and v.pk not in sett_virk:
-			sett_virk.add(v.pk)
-			ansvarlige_virksomheter.append(v)
-	ansvarlige_virksomheter.sort(key=lambda v: (v.virksomhetsforkortelse or v.virksomhetsnavn or ''))
 
 	return render(request, 'driftsmodell_alle.html', {
 		'request': request,
@@ -12463,9 +12452,6 @@ def alle_driftsmodeller(request):
 		'driftsmodeller': driftsmodeller,
 		'driftsmodell_felt_referanse': Driftsmodell(),
 		'plattform_graf': plattform_graf,
-		'chart_kritikalitet': chart_kritikalitet,
-		'ansvarlige_virksomheter': ansvarlige_virksomheter,
-		'system_colors': SYSTEM_COLORS,
 	})
 
 
@@ -12718,6 +12704,66 @@ def _driftsmodell_plattform_farge(driftsmodell):
 	return SYSTEM_COLORS['ukjent']
 
 
+def _tilgjengelighet_db_til_visning(db_val):
+	# 2026-11-05: DB 1 = display 5 (most critical); DB 6/None = not assessed.
+	if db_val is None or db_val == 6:
+		return None
+	try:
+		db_int = int(db_val)
+	except (TypeError, ValueError):
+		return None
+	if 1 <= db_int <= 5:
+		return 6 - db_int
+	return None
+
+
+def _tilgjengelighet_heat_color(heat):
+	# 2026-11-05: Cool → hot for share of systems with display tilgjengelighet 4–5.
+	if heat is None:
+		return '#E8E8E8'
+	t = max(0.0, min(1.0, float(heat)))
+	cool = (168, 213, 229)
+	hot = (192, 57, 43)
+	rgb = tuple(int(cool[i] + (hot[i] - cool[i]) * t) for i in range(3))
+	return '#%02x%02x%02x' % rgb
+
+
+def _driftsmodell_tilgjengelighet_stats_per_plattform():
+	# 2026-11-05: Per-platform counts for overview heat map (display scale 5 = most critical).
+	stats = {}
+	rows = (
+		System.objects.filter(~Q(livslop_status=7))
+		.exclude(driftsmodell_foreignkey=None)
+		.values_list('driftsmodell_foreignkey', 'tilgjengelighetsvurdering')
+	)
+	for plattform_pk, db_val in rows:
+		entry = stats.get(plattform_pk)
+		if entry is None:
+			entry = {
+				'system_count': 0,
+				'hoy_kritisk_count': 0,
+				'vurdert_count': 0,
+				'fordeling': {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 'uvurdert': 0},
+			}
+			stats[plattform_pk] = entry
+		entry['system_count'] += 1
+		visning = _tilgjengelighet_db_til_visning(db_val)
+		if visning is None:
+			entry['fordeling']['uvurdert'] += 1
+			continue
+		entry['vurdert_count'] += 1
+		entry['fordeling'][visning] += 1
+		if visning >= 4:
+			entry['hoy_kritisk_count'] += 1
+	for entry in stats.values():
+		if entry['vurdert_count']:
+			entry['heat'] = entry['hoy_kritisk_count'] / float(entry['vurdert_count'])
+		else:
+			entry['heat'] = None
+		entry['heat_color'] = _tilgjengelighet_heat_color(entry['heat'])
+	return stats
+
+
 def _driftsmodell_relaterte_plattform_pks(driftsmodell):
 	# 2026-11-05: Ancestor chain + all descendant platform ids for neighborhood graph.
 	pks = {driftsmodell.pk}
@@ -12773,34 +12819,59 @@ def _driftsmodell_kritikalitet_chart(systemer):
 	}
 
 
-def _driftsmodell_plattform_graf(plattformer_by_pk, systemtall_per_plattform, current_pk=None):
-	# 2026-11-05: Platform graph for detaljer (neighborhood) and alle (full map).
+def _driftsmodell_plattform_graf(
+	plattformer_by_pk,
+	systemtall_per_plattform,
+	current_pk=None,
+	tilgjengelighet_stats=None,
+	use_heat=False,
+):
+	# 2026-11-05: Platform graph for detaljer (neighborhood) and alle (full map + tilgjengelighet heat).
 	nodes = []
 	edges = []
+	tilgjengelighet_stats = tilgjengelighet_stats or {}
 	for plattform in plattformer_by_pk.values():
 		antall = systemtall_per_plattform.get(plattform.pk, 0)
-		virk = ''
-		if plattform.ansvarlig_virksomhet and plattform.ansvarlig_virksomhet.virksomhetsforkortelse:
-			virk = plattform.ansvarlig_virksomhet.virksomhetsforkortelse
-		label_parts = [plattform.navn]
-		if virk:
-			label_parts.append(f'({virk})')
-		label_parts.append(f'{antall} system{"er" if antall != 1 else ""}')
+		stats = tilgjengelighet_stats.get(plattform.pk) or {}
+		hoy = stats.get('hoy_kritisk_count', 0)
+		vurdert = stats.get('vurdert_count', 0)
+		heat = stats.get('heat')
+		heat_color = stats.get('heat_color') or _tilgjengelighet_heat_color(heat)
+		# 2026-11-05: Heat mode = name + optional «N høy»; count shown via badge in JS.
+		if use_heat:
+			label_parts = [plattform.navn]
+			if hoy:
+				label_parts.append(f'{hoy} høy')
+		else:
+			label_parts = [
+				plattform.navn,
+				f'{antall} system{"er" if antall != 1 else ""}',
+			]
 		er_valgt = current_pk is not None and plattform.pk == current_pk
+		if er_valgt:
+			node_color = SYSTEM_COLORS['chart_current_system']
+		elif use_heat:
+			node_color = heat_color
+		else:
+			node_color = _driftsmodell_plattform_farge(plattform)
 		nodes.append({
 			'data': {
 				'id': f'drift_{plattform.pk}',
 				'name': '\n'.join(label_parts),
 				'plattform_navn': plattform.navn,
-				'virksomhet': virk,
 				'system_count': antall,
+				'hoy_kritisk_count': hoy,
+				'vurdert_count': vurdert,
+				'heat': heat,
+				'heat_color': heat_color,
+				'tilgjengelighet_fordeling': stats.get('fordeling') or {
+					1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 'uvurdert': 0,
+				},
+				# 2026-11-05: Flag for overview toggle that collapses «Lokal drift *» platforms into one node.
+				'is_lokal_drift': 'lokal drift' in (plattform.navn or '').lower(),
 				'is_current': er_valgt,
 				'shape': 'roundrectangle',
-				'color': (
-					SYSTEM_COLORS['chart_current_system']
-					if er_valgt
-					else _driftsmodell_plattform_farge(plattform)
-				),
+				'color': node_color,
 				'href': reverse('detaljer_driftsmodell', kwargs={'pk': plattform.pk}),
 			}
 		})
