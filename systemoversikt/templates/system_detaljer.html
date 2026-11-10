@@ -1,3 +1,4 @@
+{# 2026-11-10: Integrations table marks livsløp 6/7 systems; graph hides those nodes. #}
 {# 2026-11-01: Eierskap person/seksjon search across virksomheter (cache-bust JS). #}
 {# 2026-11-01: Inline edit of Systemeier/Systemforvalter (virksomhet + person pickers). #}
 {# 2026-10-20: Restored admin “Endre informasjon” on systemdetaljer – System is not fully inline yet. #}
@@ -1518,8 +1519,18 @@
 				<tr>
 					<td><a href="/admin/systemoversikt/systemintegration/{{avhengighet.pk}}/change/">✎</a></td>
 					<td style="background-color: {{ avhengighet.color  }};">{{ avhengighet.get_integration_type_display }}</td>
-					<td>{{ avhengighet.source_system }}</td>
-					<td>{{ avhengighet.destination_system }}</td>
+					<td>
+						<span{% if avhengighet.source_system.er_ute_av_bruk %} style="text-decoration: line-through;"{% endif %}>{{ avhengighet.source_system }}</span>
+						{% if avhengighet.source_system.er_ute_av_bruk %}
+							<span class="text-danger">({{ avhengighet.source_system.get_livslop_status_display|livslop_status_label }})</span>
+						{% endif %}
+					</td>
+					<td>
+						<span{% if avhengighet.destination_system.er_ute_av_bruk %} style="text-decoration: line-through;"{% endif %}>{{ avhengighet.destination_system }}</span>
+						{% if avhengighet.destination_system.er_ute_av_bruk %}
+							<span class="text-danger">({{ avhengighet.destination_system.get_livslop_status_display|livslop_status_label }})</span>
+						{% endif %}
+					</td>
 					<td>{{ avhengighet.personopplysninger|yesno:"Ja,Nei,Vet ikke" }}</td>
 					<td>{{ avhengighet.description|default:"-" }}</td>
 					<td><a href="/admin/systemoversikt/systemintegration/{{ avhengighet.pk }}/delete/">❌</a></td>
@@ -1529,8 +1540,18 @@
 				<tr>
 					<td><a href="/admin/systemoversikt/systemintegration/{{avhengighet.pk}}/change/">✎</a></td>
 					<td style="background-color: {{ avhengighet.color  }};">{{ avhengighet.get_integration_type_display }}</td>
-					<td>{{ avhengighet.source_system }}</td>
-					<td>{{ avhengighet.destination_system }}</td>
+					<td>
+						<span{% if avhengighet.source_system.er_ute_av_bruk %} style="text-decoration: line-through;"{% endif %}>{{ avhengighet.source_system }}</span>
+						{% if avhengighet.source_system.er_ute_av_bruk %}
+							<span class="text-danger">({{ avhengighet.source_system.get_livslop_status_display|livslop_status_label }})</span>
+						{% endif %}
+					</td>
+					<td>
+						<span{% if avhengighet.destination_system.er_ute_av_bruk %} style="text-decoration: line-through;"{% endif %}>{{ avhengighet.destination_system }}</span>
+						{% if avhengighet.destination_system.er_ute_av_bruk %}
+							<span class="text-danger">({{ avhengighet.destination_system.get_livslop_status_display|livslop_status_label }})</span>
+						{% endif %}
+					</td>
 					<td>{{ avhengighet.personopplysninger|yesno:"Ja,Nei,Vet ikke" }}</td>
 					<td>{{ avhengighet.description|default:"-" }}</td>
 					<td><a href="/admin/systemoversikt/systemintegration/{{ avhengighet.pk }}/delete/">❌</a></td>

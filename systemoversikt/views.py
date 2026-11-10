@@ -7267,6 +7267,7 @@ def tjeneste_detaljer(request, pk):
 
 def generer_graf_ny(system, follow_count):
 	# 2026-06-21: Integration edges carry admin edit href – clickable in dependency chart.
+	# 2026-11-10: Skip livsløp 6/7 neighbors in the graph – still listed (and marked) in the integrations table.
 	avhengigheter_graf = {"nodes": [], "edges": []}
 	observerte_driftsmodeller = set()
 	first_round = True
@@ -7294,7 +7295,9 @@ def generer_graf_ny(system, follow_count):
 			}})
 			observerte_driftsmodeller.add(aktuelt_system.driftsmodell_foreignkey)
 
-			for s in aktuelt_system.system_integration_source.all():
+			for s in aktuelt_system.system_integration_source.exclude(
+				destination_system__livslop_status__in=LIVSLOP_UTE_AV_BRUK
+			):
 				integrasjon = s
 				s = s.destination_system
 				if s not in observerte_systemer:
@@ -7322,7 +7325,9 @@ def generer_graf_ny(system, follow_count):
 				}})
 
 			if first_round:
-				for s in aktuelt_system.system_integration_destination.all():
+				for s in aktuelt_system.system_integration_destination.exclude(
+					source_system__livslop_status__in=LIVSLOP_UTE_AV_BRUK
+				):
 					integrasjon = s
 					s = s.source_system
 					if s not in observerte_systemer:
