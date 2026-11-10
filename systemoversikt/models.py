@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-10: IntegrasjonKonfigurasjon – Service Now sources yellow after 2 days, red after 4; menu uses freshness.
 # 2026-11-04: GodkjentElektroniskArkiv.lagrer_ikke_dokumentasjon – assessed component that does not store documentation.
 # 2026-10-12: GodkjentElektroniskArkiv – separate ACL for electronic-archive approval (System fields kept for now).
 # 2026-09-25: Sarbarhetssak – title is the only required field; year/ISO week from opprettet.
@@ -1361,15 +1362,31 @@ class IntegrasjonKonfigurasjon(models.Model):
 	def __str__(self):
 		return f'{self.kilde} {self.protokoll} {self.informasjon}'
 
+	def er_service_now_kilde(self):
+		# 2026-11-10: Match "Service Now", "Service Now og VMware", and "ServiceNow".
+		kilde = (self.kilde or "").replace(" ", "").lower()
+		return kilde.startswith("servicenow")
+
+	def freshness_thresholds(self):
+		# 2026-11-10: E-mail/Service Now imports should flag sooner than monthly default.
+		if self.er_service_now_kilde():
+			return timedelta(days=2), timedelta(days=4)
+		return timedelta(days=1), timedelta(days=28)
+
+	def is_stale_critical(self):
+		# 2026-11-10: Missing or past red threshold – used by Administrasjon menu indicator.
+		_, red_after = self.freshness_thresholds()
+		if not self.dato_sist_oppdatert:
+			return True
+		return (timezone.now() - self.dato_sist_oppdatert) >= red_after
+
 	def color(self):
+		yellow_after, red_after = self.freshness_thresholds()
 		if self.dato_sist_oppdatert:
-			from datetime import datetime
-			#from django.utils import timezone
-			today = timezone.now()
-			difference = today - self.dato_sist_oppdatert
-			if difference < timedelta(days=1):
+			difference = timezone.now() - self.dato_sist_oppdatert
+			if difference < yellow_after:
 				return "#b8e1ca"
-			if difference < timedelta(days=28):
+			if difference < red_after:
 				return "#e1cfa3"
 		return "#cf949a"
 

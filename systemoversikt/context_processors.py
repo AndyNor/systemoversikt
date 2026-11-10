@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-10: integrations_ok also fails when any IntegrasjonKonfigurasjon is stale-critical (red freshness).
 # 2026-11-01: forvalter_secret_alert persists in session until dismiss (not one-shot with welcome).
 # 2026-11-01: login_welcome also returns forvalter_secret_alert (expired/soon Azure keys, one-shot).
 # 2026-11-01: Removed OIDC_IDP_URL_BASE/REALM from template context (Keycloak leftovers).
@@ -20,16 +21,24 @@ def global_settings(request):
 
 from .models import IntegrasjonKonfigurasjon
 SUCCESS = "Vellykket"
+
+
 def all_integrations_ok():
-    return not IntegrasjonKonfigurasjon.objects.exclude(
-        helsestatus=SUCCESS
-    ).exists()
+	# 2026-11-10: Helsestatus alone hid stalled Service Now e-mail imports for weeks.
+	for integrasjon in IntegrasjonKonfigurasjon.objects.all().only(
+		'kilde', 'dato_sist_oppdatert', 'helsestatus'
+	):
+		if integrasjon.helsestatus != SUCCESS:
+			return False
+		if integrasjon.is_stale_critical():
+			return False
+	return True
 
 
 def integration_health(request):
-    return {
-        "integrations_ok": all_integrations_ok(),
-    }
+	return {
+		"integrations_ok": all_integrations_ok(),
+	}
 
 
 def _forvalter_secret_alert_from_session(request):

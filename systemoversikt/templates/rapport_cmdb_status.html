@@ -1,4 +1,5 @@
 {% extends "admin_index.html" %}
+{# 2026-11-10: Explain freshness colours, script health vs data age, and direct vs file-based sources. #}
 {% load humanize %}
 {% load static %}
 
@@ -15,6 +16,33 @@
 	{% url 'admin:systemoversikt_integrasjonkonfigurasjon_changelist' as url_integrasjonkonfigurasjon %}
 	<a href="{{ url_integrasjonkonfigurasjon }}" class="btn btn-sm btn-link">✎ Rediger integrasjonskonfigurasjon (Django admin)</a>
 </p>
+
+<div class="mb-3">
+	<p>
+		Tabellen viser to ulike ting: om <strong>scriptet klarte å kjøre</strong> (kolonnen «Sist status» / helsestatus),
+		og hvor <strong>fersk dataen er</strong> (fargen på «Sist oppdatert»).
+		Menypunktet Administrasjon blir rødt når noen integrasjon har feilet, eller når dataalderen er i rød sone.
+	</p>
+	<p>
+		<span style="background-color: #b8e1ca; padding: 0 0.4em;">Grønn</span>,
+		<span style="background-color: #e1cfa3; padding: 0 0.4em;">gul</span> og
+		<span style="background-color: #cf949a; padding: 0 0.4em;">rød</span>
+		på «Sist oppdatert» er basert på alder på data – ikke på om scriptet nettopp kjørte:
+	</p>
+	<ul>
+		<li>Kilde <em>Service Now</em> (e-postfiler som leses inn via SharePoint): gul etter 2 dager, rød etter 4 dager.</li>
+		<li>Øvrige kilder: gul etter 1 dag, rød etter 28 dager.</li>
+	</ul>
+	<p>
+		Noen integrasjoner henter data <strong>direkte fra kilden</strong> (for eksempel Azure Graph, LDAP eller REST-API).
+		Da settes «Sist oppdatert» typisk til tidspunktet for vellykket kjøring.
+		Andre integrasjoner leser inn en <strong>fil som først er generert et annet sted</strong>
+		(ofte eksport fra Service Now sendt på e-post og lagt i SharePoint).
+		Da settes «Sist oppdatert» til filens egen dato.
+		Scriptet kan derfor kjøre uten feil og vise «Vellykket», mens fargen likevel blir gul eller rød
+		hvis filen ikke er fornyet – for eksempel fordi e-postoppdateringen har stoppet opp.
+	</p>
+</div>
 
 <table class="table table-sm tablesorter excel">
 	<thead>
