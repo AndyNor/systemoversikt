@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-10: Kartotekets API-er – admin sidemeny; searchable via «api».
 # 2026-11-04: Godkjente digitale arkiv + Arkiv-rapport – system sidemeny under Rapporter.
 # 2026-11-01: Elektronisk arkiv (gamle felt) – system sidemeny under Rapporter (moved from Verktøy).
 # 2026-10-13: Rename Tiltak nav search label to Risikotiltak.
@@ -210,6 +211,11 @@ NAV_PAGES = [
 	_entry('Named locations', 'rapport_azure_named_locations', 'Rapport', ['named locations', 'navngitte lokasjoner', 'ip ranges'], permissions=['systemoversikt.view_entraidconditionalaccesspolicies']),
 
 	# --- Administrasjon (admin_index.html) ---
+	_entry(
+		'Kartotekets API-er', 'api_overview', 'Administrasjon',
+		['api', 'api-er', 'api oversikt', 'api-oversikt', 'endepunkter', 'kartotekets api'],
+		permissions=['systemoversikt.view_system'],
+	),
 	_entry(
 		'Last inn OKA', 'oka_last_inn', 'Administrasjon',
 		['oka', 'last inn oka', 'informasjonskategorier import', 'klassifikasjon excel'],
