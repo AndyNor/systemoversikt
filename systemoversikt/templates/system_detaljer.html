@@ -1484,6 +1484,8 @@
 	<span style="height: 15px; width: 15px; background-color: {{ system_colors.chart_programvare }}; border-radius: 50%; display: inline-block;"></span>Programvare
 
 	<p>Systemforvaltere og superbrukere kan flytte rundt på nodene i grafen og nye lokasjoner vil bli lagret for alle. Du {% if save_rettigheter %} har {% else %} har <b>ikke</b> {% endif %} nødvendige rettigheter.</p>
+	{# 2026-11-10: Explain that livsløp 6/7 systems are omitted from the graph but kept in the table. #}
+	<p class="small text-muted">Figuren viser ikke systemer med livsløpstatus «ute av bruk» eller «fullstendig avviklet». Disse finnes fortsatt i tabellen under, merket tydelig.</p>
 
 	<div id="cy_ny" style="background-color: #FCFCFC; border: 1px solid #d6d4d4; width: 100%; height: {{avhengigheter_chart_size_ny}}px;"></div>
 	{% if avhengigheter_graf_ny.nodes|length < 2 %}
