@@ -1,4 +1,5 @@
 // Change log:
+// 2026-11-10: Re-enable parent compound events so platform groups can be dragged with children.
 // 2026-06-22: Programvare nodes use ellipse shape – same black label text as other nodes.
 // 2026-06-21: Wider edge hit targets and parent events:no – integration edges clickable in chart.
 // 2026-06-21: Apply lock UI after saved viewport restore – fixes pan shift on locked reload.
@@ -136,7 +137,7 @@
             'background-color': '#F1F9FF',
             'padding': 10,
             'compound-sizing-wrt-labels': 'exclude',
-            'events': 'no',
+            'cursor': 'grab',
           },
         },
       ],
@@ -153,6 +154,16 @@
       });
     }
 
+    let suppressNodeTap = false;
+
+    cy.on('grab', 'node', () => {
+      suppressNodeTap = false;
+    });
+
+    cy.on('drag', 'node', () => {
+      suppressNodeTap = true;
+    });
+
     function navigateFromElement(ele) {
       const href = ele.data('href');
       if (href) {
@@ -161,6 +172,10 @@
     }
 
     cy.on('tap', 'node', function () {
+      // 2026-11-10: Skip parent/platform boxes and post-drag taps – drag moves the group only.
+      if (suppressNodeTap || this.isParent()) {
+        return;
+      }
       navigateFromElement(this);
     });
 
