@@ -15358,6 +15358,40 @@ def api_systemer_optimized(request):  # tjeneste- og systemoversikt
 	return JsonResponse(resultat, safe=False, status=200)
 
 
+def api_kiprotokoll(request):
+	# 2026-11-10: Stub JSON endpoint for KI-protokoll collection; empty data until payload is defined.
+	if request.method != "GET":
+		raise Http404
+
+	key = request.headers.get("key")
+	allowed_keys = APIKeys.objects.filter(navn="ki_protokoll_innsamling").values_list("key", flat=True)
+	if key not in allowed_keys:
+		return JsonResponse(
+			{"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None},
+			safe=False, status=403
+		)
+
+	ApplicationLog.objects.create(
+		event_type="api_kiprotokoll",
+		message=f"Innkommende kall fra {get_client_ip(request)}"
+	)
+	runtime_t0 = time.time()
+
+	data = []
+
+	delta = round(time.time() - runtime_t0, 3)
+	resultat = {
+		"beskrivelse": "KI-protokoll innsamling fra Kartoteket. Ingen data per nå.",
+		"antall": 0,
+		"kjoretid": f"{delta}",
+		"data": data,
+	}
+
+	ApplicationLog.objects.create(
+		event_type="api_kiprotokoll",
+		message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder."
+	)
+	return JsonResponse(resultat, safe=False, status=200)
 
 
 def api_systemtyper(request): #tjeneste- og systemoversikt
