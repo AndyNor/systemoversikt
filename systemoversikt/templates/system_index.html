@@ -1,40 +1,81 @@
 {% extends "index.html" %}
+{# Change log: #}
+{# 2026-11-11: Add Opprett for leverandør and URL in system sidemeny. #}
+{# 2026-11-11: Sleeker Alle/Opprett pairs – teal circle-plus icon, indent, more spacing. #}
+{# 2026-11-11: Pair Alle-/Opprett-links in system sidemeny; green + instead of separate Opprett section. #}
 {# 2026-11-04: «Godkjente digitale arkiv» + «Arkiv-rapport» under Rapporter. #}
 {# 2026-11-01: Sidemeny link «Elektronisk arkiv (gamle felt)» under Rapporter (moved from Verktøy). #}
 {# 2026-09-15: Sidemeny link to dokumentasjonsforvaltning information page. #}
 {# 2026-09-15: Sidemeny link to OKA-klassifikasjon overview. #}
 
 {% block sidemeny %}
-
+{# Styles live here (not ekstrastyle) so child templates that override ekstrastyle still get them. #}
+<style>
+	/* 2026-11-11: System sidemeny create links – soft teal, indented, less compact. */
+	.sidemeny-gruppe {
+		margin-bottom: 0.9rem;
+	}
+	.sidemeny-gruppe .btn-link {
+		margin-bottom: 0;
+	}
+	.sidemeny-opprett {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		margin: 0.2rem 0 0 0.85rem;
+		padding: 0.2rem 0.45rem !important;
+		font-size: 0.78rem;
+		line-height: 1.2;
+		color: #0f766e !important;
+		border-radius: 0.35rem;
+	}
+	.sidemeny-opprett:hover {
+		color: #115e59 !important;
+		background-color: #f0fdfa;
+	}
+	.sidemeny-opprett .create_button {
+		flex-shrink: 0;
+		vertical-align: middle;
+	}
+</style>
 
 {% if user.is_authenticated %}
 	{% with rn=request.resolver_match %}
-	<h6>Opprett</h6>
+		<div class="sidemeny-gruppe">
+			{% url "tjenester_oversikt" as tjenester_oversikt_url %}
+			<a href="{{ tjenester_oversikt_url }}" class="btn btn-sm btn-link {% if rn and rn.url_name == 'tjenester_oversikt' %}fremhev{% endif %}">Alle tjenesteområder</a><br>
+			<a href="/admin/systemoversikt/tjeneste/add/" class="btn btn-sm btn-link sidemeny-opprett">{% include 'site_create_button.html' %} Opprett tjeneste</a>
+		</div>
 
-		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/tjeneste/add/">{% include 'site_edit_button.html' %} Ny tjeneste</a>
-		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/system/add/?systemeier={{ virksomhet.pk }}">{% include 'site_edit_button.html' %} Nytt system</a>
-		<a href="/admin/systemoversikt/driftsmodell/add/" class="btn btn-sm btn-link">{% include 'site_edit_button.html' %} Nytt driftsmiljø</a>
-		<a href="/admin/systemoversikt/programvare/add/" class="btn btn-sm btn-link">{% include 'site_edit_button.html' %} Ny programvare</a>
+		<div class="sidemeny-gruppe">
+			{% url 'systemer_vis_alle' as systemer_vis_alle_url %}
+			<a href="{{ systemer_vis_alle_url }}" class="btn btn-sm btn-link {% if rn and rn.url_name == 'systemer_vis_alle' %}fremhev{% endif %}">Alle systemer</a><br>
+			<a href="/admin/systemoversikt/system/add/?systemeier={{ virksomhet.pk }}" class="btn btn-sm btn-link sidemeny-opprett">{% include 'site_create_button.html' %} Opprett system</a>
+		</div>
 
-		<hr>
-		{% url "tjenester_oversikt" as tjenester_oversikt_url %}
-		<a href="{{ tjenester_oversikt_url }}" class="btn btn-sm btn-link {% if rn and rn.url_name == 'tjenester_oversikt' %}fremhev{% endif %}">Alle tjenesteområder</a>
+		<div class="sidemeny-gruppe">
+			{% url "alle_driftsmodeller" as alle_driftsmodeller_url %}
+			<a href="{{ alle_driftsmodeller_url }}" class="btn btn-sm btn-link {% if rn and rn.url_name == 'alle_driftsmodeller' %}fremhev{% endif %}">Alle driftsplattformer</a><br>
+			<a href="/admin/systemoversikt/driftsmodell/add/" class="btn btn-sm btn-link sidemeny-opprett">{% include 'site_create_button.html' %} Opprett driftsmiljø</a>
+		</div>
 
-		{% url 'systemer_vis_alle' as systemer_vis_alle_url %}
-		<a href="{{ systemer_vis_alle_url }}" class="btn btn-sm btn-link {% if rn and rn.url_name == 'systemer_vis_alle' %}fremhev{% endif %}">Alle systemer</a><br>
+		<div class="sidemeny-gruppe">
+			{% url 'alle_leverandorer' as alle_leverandorer_url %}
+			<a href="{{ alle_leverandorer_url }}" class="btn btn-sm btn-link {% if rn and rn.url_name == 'alle_leverandorer' %}fremhev{% endif %}">Alle leverandører</a><br>
+			<a href="/admin/systemoversikt/leverandor/add/" class="btn btn-sm btn-link sidemeny-opprett">{% include 'site_create_button.html' %} Opprett leverandør</a>
+		</div>
 
-		{% url "alle_driftsmodeller" as alle_driftsmodeller_url %}
-		<a href="{{ alle_driftsmodeller_url }}" class="btn btn-sm btn-link {% if rn and rn.url_name == 'alle_driftsmodeller' %}fremhev{% endif %}">Alle driftsplattformer</a><br>
+		<div class="sidemeny-gruppe">
+			{% url "alle_programvarer" as alle_programvarer_url %}
+			<a href="{{ alle_programvarer_url }}" class="btn btn-sm btn-link {% if rn and rn.url_name == 'alle_programvarer' %}fremhev{% endif %}">All programvare</a><br>
+			<a href="/admin/systemoversikt/programvare/add/" class="btn btn-sm btn-link sidemeny-opprett">{% include 'site_create_button.html' %} Opprett programvare</a>
+		</div>
 
-		{% url 'alle_leverandorer' as alle_leverandorer_url %}
-		<a href="{{ alle_leverandorer_url }}" class="btn btn-sm {% if rn and rn.url_name == 'alle_leverandorer' %}fremhev{% endif %}">Alle leverandører</a><br>
-
-		{% url "alle_programvarer" as alle_programvarer_url %}
-		<a href="{{ alle_programvarer_url }}" class="btn btn-sm btn-link {% if rn and rn.url_name == 'alle_programvarer' %}fremhev{% endif %}">All programvare</a><br>
-
-		{% url "alle_systemurler" as alle_systemurler_url %}
-		<a href="{{ alle_systemurler_url }}" class="btn btn-sm btn-link {% if rn and rn.url_name == 'alle_systemurler' %}fremhev{% endif %}">Alle URLer</a><br>
-
+		<div class="sidemeny-gruppe">
+			{% url "alle_systemurler" as alle_systemurler_url %}
+			<a href="{{ alle_systemurler_url }}" class="btn btn-sm btn-link {% if rn and rn.url_name == 'alle_systemurler' %}fremhev{% endif %}">Alle URLer</a><br>
+			<a href="/admin/systemoversikt/systemurl/add/" class="btn btn-sm btn-link sidemeny-opprett">{% include 'site_create_button.html' %} Opprett URL</a>
+		</div>
 
 		<hr>
 

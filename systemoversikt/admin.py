@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-11: System admin – driftsplattform beside systemnavn; risikovurdering under Grunnleggende.
+# 2026-11-11: System admin – required fields in top fieldset «Obligatoriske opplysninger».
 # 2026-11-11: Remove System.er_arkiv / dato from admin – electronic-archive approval only on GodkjentElektroniskArkiv.
 # 2026-11-04: GodkjentElektroniskArkivAdmin – list lagrer_ikke_dokumentasjon.
 # 2026-10-30: System admin – Systemklassifisering and Grensesnitt directly under systemnavn/alias.
@@ -649,20 +651,27 @@ class SystemAdmin(SimpleHistoryAdmin):
 	)
 
 	fieldsets = (
-		('Initiell registrering - informasjon alle systemer må ha utfylt', {
+		# 2026-11-11: Required fields at top; risikovurdering_behovsvurdering prefilled → Grunnleggende.
+		('Obligatoriske opplysninger', {
+			'description': 'Disse feltene må fylles ut for å lagre systemet.',
+			'fields': (
+				('systemnavn', 'driftsmodell_foreignkey'),
+				('systemforvalter', 'systemforvalter_kontaktpersoner_referanse'),
+				'livslop_status',
+			),
+		}),
+		('Grunnleggende opplysninger', {
 			'description': '',
 			'fields': (
 				# 2026-09-21: Alias beside systemnavn; programvarer on its own row; forvalter personer/e-post regrouped.
-				('systemnavn', 'alias'),
+				'alias',
 				# 2026-10-30: Systemklassifisering + Grensesnitt directly under systemnavn/alias for quicker initial fill-in.
 				('systemeierskapsmodell', 'systemtyper'),
 				'programvarer',
-				('systemforvalter', 'systemforvalter_kontaktpersoner_referanse'),
 				('systemforvalter_avdeling_referanse', 'forvaltning_epost'),
 				'godkjente_bestillere',
-				'livslop_status',
 				'systembeskrivelse',
-				('driftsmodell_foreignkey', 'er_egenutviklet'),
+				'er_egenutviklet',
 				('systemleverandor', 'systemleverandor_vedlikeholdsavtale',),
 				('applikasjonsdriftleverandor', 'applikasjonsdrift_behov_databehandleravtale'),
 				'basisdriftleverandor',
@@ -671,6 +680,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 				# 2026-09-21: URL alone; dates/citrix/EA moved.
 				'systemurl',
 				('systemeier', 'systemeier_kontaktpersoner_referanse'),
+				'risikovurdering_behovsvurdering',
 			),
 		}),
 		('Informasjonsbehandling og andre vurderinger', {
@@ -683,7 +693,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 				'LOSref',
 				('innsyn_innbygger', 'innsyn_ansatt'),
 				'kontaktperson_innsyn',
-				('risikovurdering_behovsvurdering', 'dato_sist_ros'),
+				'dato_sist_ros',
 				('url_risikovurdering', 'risikovurdering_tekst'),
 				('teknisk_egnethet', 'funksjonell_egnethet'),
 				'systemkategorier',
