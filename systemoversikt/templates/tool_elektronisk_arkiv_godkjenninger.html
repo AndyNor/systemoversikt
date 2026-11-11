@@ -1,7 +1,7 @@
 {% extends "system_index.html" %}
+{# 2026-11-11: Report lists GodkjentElektroniskArkiv only (legacy System.er_arkiv removed). #}
 {# 2026-11-04: Title/nav «Godkjente digitale arkiv»; URL under /systemer/. #}
 {# 2026-11-01: Extends system_index – link moved from Verktøy to Systemoversikt / Rapporter. #}
-{# 2026-10-12: Migration checklist – systems with old System electronic-archive fields set. #}
 
 {% block overskrift %}
 	Godkjente digitale arkiv
@@ -10,15 +10,13 @@
 {% block hovedinnhold %}
 
 <p>
-	Systemer der de <em>gamle</em> feltene på System er satt
-	(<code>er_arkiv</code> og/eller <code>dato_godkjent_elektronisk_arkiv</code>).
-	Brukes for å se hvor mye som må overføres til den nye klassen
-	<code>GodkjentElektroniskArkiv</code>.
+	Systemer som er godkjent som elektronisk arkiv
+	(<code>GodkjentElektroniskArkiv</code>).
+	Godkjenning redigeres på systemdetaljer.
 </p>
 
 <p>
-	<strong>{{ antall }}</strong> system{{ antall|pluralize:"er" }} med gammel verdi.
-	<strong>{{ antall_med_ny }}</strong> av disse har allerede en rad i den nye klassen.
+	<strong>{{ antall }}</strong> system{{ antall|pluralize:"er" }} godkjent.
 </p>
 
 {% if systemer %}
@@ -27,12 +25,9 @@
 		<tr>
 			<th>System</th>
 			<th>Forvalter</th>
-			<th>Godkjent (gammelt)</th>
-			<th>Dato (gammelt)</th>
-			<th>Ny klasse</th>
-			<th>Godkjent (nytt)</th>
-			<th>Dato (nytt)</th>
-			<th>Henvisning (nytt)</th>
+			<th>Dato godkjent</th>
+			<th>Henvisning</th>
+			<th>Lagrer ikke dokumentasjon</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -43,42 +38,15 @@
 				<a href="{{ url_system }}">{{ s.systemnavn }}</a>
 			</td>
 			<td>{{ s.systemforvalter.virksomhetsforkortelse|default:"–" }}</td>
-			<td>{{ s.er_arkiv|yesno:"Ja,Nei" }}</td>
-			<td>{{ s.dato_godkjent_elektronisk_arkiv|date:"Y-m-d"|default:"–" }}</td>
-			<td>
-				{% if s.godkjent_elektronisk_arkiv %}
-					Ja
-				{% else %}
-					Nei
-				{% endif %}
-			</td>
-			<td>
-				{% if s.godkjent_elektronisk_arkiv %}
-					{{ s.godkjent_elektronisk_arkiv.godkjent|yesno:"Ja,Nei" }}
-				{% else %}
-					–
-				{% endif %}
-			</td>
-			<td>
-				{% if s.godkjent_elektronisk_arkiv %}
-					{{ s.godkjent_elektronisk_arkiv.dato_godkjent_elektronisk_arkiv|date:"Y-m-d"|default:"–" }}
-				{% else %}
-					–
-				{% endif %}
-			</td>
-			<td>
-				{% if s.godkjent_elektronisk_arkiv %}
-					{{ s.godkjent_elektronisk_arkiv.henvisning|default:"–" }}
-				{% else %}
-					–
-				{% endif %}
-			</td>
+			<td>{{ s.godkjent_elektronisk_arkiv.dato_godkjent_elektronisk_arkiv|date:"Y-m-d"|default:"–" }}</td>
+			<td>{{ s.godkjent_elektronisk_arkiv.henvisning|default:"–" }}</td>
+			<td>{{ s.godkjent_elektronisk_arkiv.lagrer_ikke_dokumentasjon|yesno:"Ja,Nei" }}</td>
 		</tr>
 	{% endfor %}
 	</tbody>
 </table>
 {% else %}
-<p class="text-muted">Ingen systemer har verdier i de gamle feltene.</p>
+<p class="text-muted">Ingen systemer er registrert som godkjent elektronisk arkiv.</p>
 {% endif %}
 
 {% endblock hovedinnhold %}

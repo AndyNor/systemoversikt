@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-11: Drop System.er_arkiv – godkjente-digitale-arkiv, integrasjon, arkivplan and import/export use GodkjentElektroniskArkiv only.
 # 2026-11-04: rapport_arkiv – system archive overview (OKA, approval, migrations, virksomhetsbruk).
 # 2026-11-04: Godkjente digitale arkiv – URL under /systemer/ (was /tools/).
 # 2026-11-01: Eierskap person/seksjon search – cross-virksomhet, prefer user's virksomhet first.
@@ -1536,33 +1537,23 @@ def tool_service_announcements(request):
 
 
 def tool_elektronisk_arkiv_godkjenninger(request):
-	# 2026-10-12: Checklist of systems with values on System.er_arkiv / dato (pre-migration).
+	# 2026-11-11: List systems approved via GodkjentElektroniskArkiv (legacy System fields removed).
 	# 2026-11-04: Served at /systemer/godkjente-digitale-arkiv/ (was /tools/).
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render_access_denied(request, required_permissions)
 
 	systemer = list(
-		System.objects.filter(
-			Q(er_arkiv=True) | Q(dato_godkjent_elektronisk_arkiv__isnull=False)
-		)
+		System.objects.filter(godkjent_elektronisk_arkiv__godkjent=True)
 		.select_related('systemforvalter', 'godkjent_elektronisk_arkiv')
 		.order_by('systemnavn')
 	)
-	antall_med_ny = 0
-	for system in systemer:
-		try:
-			system.godkjent_elektronisk_arkiv
-			antall_med_ny += 1
-		except GodkjentElektroniskArkiv.DoesNotExist:
-			pass
 
 	return render(request, 'tool_elektronisk_arkiv_godkjenninger.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'systemer': systemer,
 		'antall': len(systemer),
-		'antall_med_ny': antall_med_ny,
 	})
 
 
@@ -3019,10 +3010,6 @@ def tool_systemimport(request):
 							system_old.alias = system_new['alias']
 							import_data_result += f"- oppdaterte alias\n"
 
-						if 'er_arkiv' in system_new:
-							system_old.er_arkiv = system_new['er_arkiv']
-							import_data_result += f"- oppdaterte er_arkiv\n"
-
 						if 'antall_brukere' in system_new:
 							system_old.antall_brukere = system_new['antall_brukere']
 							import_data_result += f"- oppdaterte antall_brukere\n"
@@ -3117,7 +3104,6 @@ def tool_systemimport(request):
 					"id": system.pk,
 					"systemnavn": system.systemnavn,
 					"alias": system.alias,
-					"er_arkiv": system.er_arkiv,
 					"antall_brukere": system.antall_brukere,
 					"livslop_status": system.livslop_status,
 					"kritisk_kapabilitet": [k.pk for k in system.kritisk_kapabilitet.all()],
@@ -7529,17 +7515,17 @@ def systemdetaljer(request, pk):
 		and not arkivoverforinger_som_avsender.exists()
 	)
 
-	# 2026-09-14: Approved archive systems (er_arkiv / 🗁 Arkivsystem) linked via SystemIntegration.
+	# 2026-11-11: Approved archive systems via GodkjentElektroniskArkiv linked by SystemIntegration.
 	arkiv_ids = set(
 		SystemIntegration.objects.filter(
 			source_system=system,
-			destination_system__er_arkiv=True,
+			destination_system__godkjent_elektronisk_arkiv__godkjent=True,
 		).values_list('destination_system_id', flat=True)
 	)
 	arkiv_ids.update(
 		SystemIntegration.objects.filter(
 			destination_system=system,
-			source_system__er_arkiv=True,
+			source_system__godkjent_elektronisk_arkiv__godkjent=True,
 		).values_list('source_system_id', flat=True)
 	)
 	arkiv_ids.discard(system.pk)
@@ -7593,7 +7579,7 @@ def systemdetaljer(request, pk):
 
 	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
-	# 2026-10-12: New ACL-separated archive approval (System.er_arkiv kept until data migration).
+	# 2026-10-12: ACL-separated archive approval (GodkjentElektroniskArkiv).
 	godkjenning_elektronisk_arkiv = getattr(system, 'godkjent_elektronisk_arkiv', None)
 
 	vulnerabilities = list(system.vulnerabilities_old())
@@ -12331,12 +12317,16 @@ def alle_virksomheter_kontaktinfo(request):
 
 def virksomhet_arkivplan(request, pk):
 	# 2026-09-14: Include SystemBruk usage period and innhold for archive metadata per virksomhet.
+	# 2026-11-11: Archive approval from GodkjentElektroniskArkiv (System.er_arkiv removed).
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render_access_denied(request, required_permissions)
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
-	systemer = System.objects.filter(Q(systemeier=virksomhet) | Q(systemforvalter=virksomhet))
+	systemer = (
+		System.objects.filter(Q(systemeier=virksomhet) | Q(systemforvalter=virksomhet))
+		.select_related('godkjent_elektronisk_arkiv')
+	)
 	systembruk = SystemBruk.objects.filter(brukergruppe=virksomhet).select_related('system').order_by(Lower('system__systemnavn'))
 
 	return render(request, 'virksomhet_arkivplan.html', {

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-11: Godkjente digitale arkiv keywords – drop er_arkiv (legacy System field removed).
 # 2026-11-10: Kartotekets API-er – admin sidemeny; searchable via «api».
 # 2026-11-04: Godkjente digitale arkiv + Arkiv-rapport – system sidemeny under Rapporter.
 # 2026-11-01: Elektronisk arkiv (gamle felt) – system sidemeny under Rapporter (moved from Verktøy).
@@ -106,7 +107,7 @@ NAV_PAGES = [
 	),
 	_entry(
 		'Godkjente digitale arkiv', 'godkjente_digitale_arkiv', 'System',
-		['godkjente digitale arkiv', 'elektronisk arkiv', 'godkjent elektronisk arkiv', 'er_arkiv'],
+		['godkjente digitale arkiv', 'elektronisk arkiv', 'godkjent elektronisk arkiv'],
 	),
 	_entry(
 		'Arkiv-rapport', 'rapport_arkiv', 'System',

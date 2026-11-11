@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-11: Remove System.er_arkiv / dato from admin – electronic-archive approval only on GodkjentElektroniskArkiv.
 # 2026-11-04: GodkjentElektroniskArkivAdmin – list lagrer_ikke_dokumentasjon.
 # 2026-10-30: System admin – Systemklassifisering and Grensesnitt directly under systemnavn/alias.
 # 2026-09-25: Sarbarhetssak admin – free-text oppgavestatus is searchable.
@@ -598,7 +599,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 		return formfield
 
 	actions = [export_as_csv_action("CSV Eksport")]
-	list_display = ('systemnavn', 'alias', 'kvalitetssikret', 'systemeierskapsmodell', 'er_arkiv', 'livslop_status', 'systemeier', 'systemforvalter', 'driftsmodell_foreignkey')
+	list_display = ('systemnavn', 'alias', 'kvalitetssikret', 'systemeierskapsmodell', 'livslop_status', 'systemeier', 'systemforvalter', 'driftsmodell_foreignkey')
 	search_fields = ('systemnavn', 'alias',)
 	list_filter = ('autentiseringsteknologi', 'autentiseringsalternativer', 'database_in_use', 'database_supported', 'systemeier', 'systemforvalter', 'sikkerhetsnivaa', 'systemtyper', 'livslop_status', 'driftsmodell_foreignkey', 'systemeierskapsmodell', 'strategisk_egnethet', 'funksjonell_egnethet', 'teknisk_egnethet', 'isolert_drift', 'er_egenutviklet')
 
@@ -697,12 +698,11 @@ class SystemAdmin(SimpleHistoryAdmin):
 			),
 		}),
 		('Arkiv', {
-			'description': 'Opplysninger om systemet som elektronisk arkiv.',
+			# 2026-11-11: Approval fields removed from System; edit via GodkjentElektroniskArkiv / systemdetaljer.
+			'description': 'Opplysninger om systemet som elektronisk arkiv. Godkjenning som elektronisk arkiv redigeres på systemdetaljer (GodkjentElektroniskArkiv).',
 			'fields': (
 				# 2026-09-21: Lifecycle dates first in Arkiv – taken i bruk / utfasing before archive-specific fields.
 				('dato_etablert', 'dato_end_of_life'),
-				'er_arkiv',
-				'dato_godkjent_elektronisk_arkiv',
 				'produksjonsformater',
 				'informasjonskategorier',
 				'arkivkommentar',

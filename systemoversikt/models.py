@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-11: Remove System.er_arkiv / dato_godkjent_elektronisk_arkiv – approval lives only on GodkjentElektroniskArkiv.
 # 2026-11-10: IntegrasjonKonfigurasjon – Service Now sources yellow after 2 days, red after 4; menu uses freshness.
 # 2026-11-04: GodkjentElektroniskArkiv.lagrer_ikke_dokumentasjon – assessed component that does not store documentation.
 # 2026-10-12: GodkjentElektroniskArkiv – separate ACL for electronic-archive approval (System fields kept for now).
@@ -5766,7 +5767,7 @@ class ArkivOverforing(models.Model):
 
 class GodkjentElektroniskArkiv(models.Model):
 	# 2026-10-12: Own model so Byarkivet can edit approval without change_system.
-	# System.er_arkiv / System.dato_godkjent_elektronisk_arkiv remain until data is migrated.
+	# 2026-11-11: Legacy System.er_arkiv / dato_godkjent_elektronisk_arkiv removed; this model is the source of truth.
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
 			auto_now_add=True,
@@ -6513,19 +6514,6 @@ class System(models.Model):
 			verbose_name="Godkjente Kompass-bestillere",
 			blank=True,
 			help_text=u"Forvaltere er autorisert til å bestille endringer på systemet i Kompass. Her kan du gjerne legge inn hele forvalterteamet rundt systemet. Hvis du ikke finner personen du leter etter, kan du legge til med +-tegnet.",
-			)
-	er_arkiv = models.BooleanField(
-			# 2026-09-14: Label is approval as electronic archive, not a generic archive flag.
-			verbose_name="Godkjent som elektronisk arkiv?",
-			default=False,
-			help_text=u"Krysses av dersom systemet er godkjent som elektronisk arkiv i henhold til arkivlovverk.",
-			)
-	dato_godkjent_elektronisk_arkiv = models.DateField(
-			# 2026-09-14: Date the system was approved as an electronic archive.
-			verbose_name="Dato godkjent som elektronisk arkiv",
-			null=True,
-			blank=True,
-			help_text=u"Datoen systemet ble godkjent som elektronisk arkiv.",
 			)
 	produksjonsformater = models.JSONField(
 			# 2026-09-14: Multi-select production formats for archive metadata; extend VALG_PRODUKSJONSFORMAT to add more.

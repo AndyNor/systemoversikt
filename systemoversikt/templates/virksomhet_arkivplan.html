@@ -1,6 +1,7 @@
 {% extends "virksomhet_index.html" %}
 {% load humanize %}
 {% load static %}
+{# 2026-11-11: Archive approval from GodkjentElektroniskArkiv (System.er_arkiv removed). #}
 {# 2026-09-14: Systembruk table with tatt_i_bruk, avsluttet and innhold for archive usage metadata. #}
 
 {% block ekstrameny %}
@@ -23,7 +24,7 @@
 		<tr>
 			<th class="filter-false">Endre</th>
 			<th>Systemnavn</th>
-			<th>Arkivsystem?</th>
+			<th>Godkjent som elektronisk arkiv?</th>
 			<th>Etablert</th>
 			<th>Livsløpsstatus</th>
 			<th>End of life</th>
@@ -36,7 +37,13 @@
 				{# 2026-09-14: Edit link used bruk.system.pk which is undefined in this loop – use system.pk. #}
 				<td><a href="/admin/systemoversikt/system/{{ system.pk }}/change/">{% include 'site_edit_button.html' %}</a></td>
 				<td>{{ system }}</td>
-				<td>{{ system.er_arkiv|yesno:"Ja, Nei" }}</td>
+				<td>
+					{% if system.godkjent_elektronisk_arkiv and system.godkjent_elektronisk_arkiv.godkjent %}
+						Ja
+					{% else %}
+						Nei
+					{% endif %}
+				</td>
 				<td>{{ system.dato_etablert|default:"-" }}</td>
 				<td>{{ system.get_livslop_status_display }}</td>
 				<td>{{ system.dato_end_of_life|default:"-" }}</td>
