@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-11: Document that hash length matches LDAP import (12-char SHA-256 hex).
 # 2026-07-02: One-off script – anonymize remaining AD user PII without LDAP access.
 """
-Engangsscript: anonymiser bruker-PII i databasen (samme felt som ldap_users_paged_v2),
-uten LDAP-tilgang. Bruker 12-tegns SHA-256-hex (kortere enn LDAP-importens 24).
+Anonymiser bruker-PII i databasen (samme felt og 12-tegns SHA-256-hex som ldap_users_paged_v2),
+uten LDAP-tilgang.
 
 Bruk (krever THIS_ENV=TEST):
   python manage.py manuell_anonymiser_brukere --dry-run
@@ -51,7 +52,7 @@ def _anonymize_email(email):
 class Command(BaseCommand):
 	help = (
 		"Anonymiser bruker-PII (fornavn, etternavn, e-post, beskrivelse, visningsnavn) "
-		"med 12-tegns SHA-256-hex. Krever THIS_ENV=TEST."
+		"med 12-tegns SHA-256-hex (samme som LDAP-import). Krever THIS_ENV=TEST."
 	)
 
 	def add_arguments(self, parser):

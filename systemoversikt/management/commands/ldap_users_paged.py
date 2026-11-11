@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# Change log:
+# 2026-11-11: Anonymize PII with 12-char SHA-256 hex (aligned with manuell_anonymiser_brukere).
 from django.core.management.base import BaseCommand
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
@@ -302,7 +304,7 @@ class Command(BaseCommand):
 						first_name = attrs["givenName"][0].decode()
 					if os.environ['THIS_ENV'] == "TEST":
 						# fjerne navn i testmiljøet
-						first_name = hashlib.sha256(first_name.encode('utf-8')).hexdigest()[0:24]
+						first_name = hashlib.sha256(first_name.encode('utf-8')).hexdigest()[0:12]
 					user.first_name = first_name
 
 					last_name = ""
@@ -310,7 +312,7 @@ class Command(BaseCommand):
 						last_name = attrs["sn"][0].decode()
 					if os.environ['THIS_ENV'] == "TEST":
 						# fjerne navn i testmiljøet
-						last_name = hashlib.sha256(last_name.encode('utf-8')).hexdigest()[0:24]
+						last_name = hashlib.sha256(last_name.encode('utf-8')).hexdigest()[0:12]
 					user.last_name = last_name
 
 					if "title" in attrs:
@@ -338,7 +340,7 @@ class Command(BaseCommand):
 						if os.environ['THIS_ENV'] == "TEST": # innrykk: kan bare splitte hvis vi vet det er en e-postadresse
 							# fjerne navn i testmiljøet
 							email_parts = email.split("@")
-							email_identifier = hashlib.sha256(email_parts[0].encode('utf-8')).hexdigest()[0:24]
+							email_identifier = hashlib.sha256(email_parts[0].encode('utf-8')).hexdigest()[0:12]
 							email_domain = email_parts[1]
 							email = f"{email_identifier}@{email_domain}"
 					user.email = email
@@ -362,7 +364,7 @@ class Command(BaseCommand):
 						description = ""
 					if os.environ['THIS_ENV'] == "TEST":
 						# fjerne beskrivelse i testmiljøet
-						description = hashlib.sha256(description.encode('utf-8')).hexdigest()[0:24]
+						description = hashlib.sha256(description.encode('utf-8')).hexdigest()[0:12]
 					user.profile.description = description
 
 					try:
@@ -388,7 +390,7 @@ class Command(BaseCommand):
 						displayName = ""
 					if os.environ['THIS_ENV'] == "TEST":
 						# fjerne navn i testmiljøet
-						displayName = hashlib.sha256(displayName.encode('utf-8')).hexdigest()[0:24]
+						displayName = hashlib.sha256(displayName.encode('utf-8')).hexdigest()[0:12]
 					user.profile.displayName = displayName
 
 					user.is_active = True
