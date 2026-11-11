@@ -15353,9 +15353,23 @@ def api_systemer_optimized(request):  # tjeneste- og systemoversikt
 	return JsonResponse(resultat, safe=False, status=200)
 
 
+def _kiprotokoll_resultat():
+	# 2026-11-11: Shared payload for API-key and session-authenticated KI-protokoll endpoints.
+	runtime_t0 = time.time()
+	data = []
+	delta = round(time.time() - runtime_t0, 3)
+	return {
+		"beskrivelse": "KI-protokoll innsamling fra Kartoteket. Ingen data per nå.",
+		"antall": 0,
+		"kjoretid": f"{delta}",
+		"data": data,
+	}
+
+
 def api_kiprotokoll(request):
 	# 2026-11-10: Stub JSON endpoint for KI-protokoll collection; empty data until payload is defined.
 	# 2026-11-11: Log failed/missing API key attempts so they appear on /admin/logger/api/.
+	# 2026-11-11: Shared payload via _kiprotokoll_resultat() so klientside variant stays in sync.
 	if request.method != "GET":
 		raise Http404
 
@@ -15375,21 +15389,39 @@ def api_kiprotokoll(request):
 		event_type="api_kiprotokoll",
 		message=f"Innkommende kall fra {get_client_ip(request)}"
 	)
-	runtime_t0 = time.time()
 
-	data = []
-
-	delta = round(time.time() - runtime_t0, 3)
-	resultat = {
-		"beskrivelse": "KI-protokoll innsamling fra Kartoteket. Ingen data per nå.",
-		"antall": 0,
-		"kjoretid": f"{delta}",
-		"data": data,
-	}
+	resultat = _kiprotokoll_resultat()
 
 	ApplicationLog.objects.create(
 		event_type="api_kiprotokoll",
-		message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder."
+		message=f"kallet fra {get_client_ip(request)} tok {resultat['kjoretid']} sekunder."
+	)
+	return JsonResponse(resultat, safe=False, status=200)
+
+
+def api_klientside_kiprotokoll(request):
+	# 2026-11-11: Session-auth variant of /api/kiprotokoll/ for browser clients (no API key).
+	# 2026-11-11: Include caller UPN (User.email) so client-side consumers can identify the user.
+	if request.method != "GET":
+		raise Http404
+
+	if not request.user.is_authenticated:
+		return JsonResponse(
+			{"message": "Authentication required", "data": None},
+			safe=False, status=401
+		)
+
+	ApplicationLog.objects.create(
+		event_type="api_klientside_kiprotokoll",
+		message=f"Innkommende kall fra {get_client_ip(request)} (bruker {request.user})"
+	)
+
+	resultat = _kiprotokoll_resultat()
+	resultat["upn"] = request.user.email or None
+
+	ApplicationLog.objects.create(
+		event_type="api_klientside_kiprotokoll",
+		message=f"kallet fra {get_client_ip(request)} tok {resultat['kjoretid']} sekunder."
 	)
 	return JsonResponse(resultat, safe=False, status=200)
 

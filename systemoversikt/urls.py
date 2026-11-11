@@ -2,6 +2,7 @@
 The `urlpatterns` list routes URLs to views. For more information please see:
 	https://docs.djangoproject.com/en/1.11/topics/http/urls/
 """
+# 2026-11-11: Session-auth KI-protokoll at /api/klientside/kiprotokoll/ (same payload, no API key).
 # 2026-11-10: Stub JSON API at /api/kiprotokoll/ (APIKeys navn ki_protokoll_innsamling); empty data for now.
 # 2026-11-04: Godkjente digitale arkiv moved to /systemer/; new Arkiv-rapport overview.
 # 2026-11-01: POST dismiss for forvalter Azure key expiry banner (session until X).
@@ -509,6 +510,7 @@ urlpatterns = [
 	# system og tjenesteoversikt
 	re_path(r'^api/systemer/$', views.api_systemer_optimized, name='api_systemer'), # Tjeneste- og systemoversikt
 	re_path(r'^api/kiprotokoll/$', views.api_kiprotokoll, name='api_kiprotokoll'), # KI-protokoll innsamling (stub)
+	re_path(r'^api/klientside/kiprotokoll/$', views.api_klientside_kiprotokoll, name='api_klientside_kiprotokoll'), # KI-protokoll for innloggede klienter
 	re_path(r'^api/virksomheter/$', views.api_virksomheter, name='api_virksomheter'), # Tjeneste- og systemoversikt
 	re_path(r'^api/systembruk/$', views.api_systembruk_optimized, name='api_systembruk'), # Tjeneste- og systemoversikt
 	re_path(r'^api/systemtyper/$', views.api_systemtyper, name='api_systemtyper'), # Tjeneste- og systemoversikt
