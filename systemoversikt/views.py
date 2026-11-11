@@ -15384,8 +15384,15 @@ def _kiprotokoll_systemer_for_virksomhet(virksomhet):
 
 
 def _kiprotokoll_system_liste(systemer):
-	# 2026-11-11: Compact search payload – id + navn only.
-	return [{"id": system.pk, "navn": system.systemnavn} for system in systemer]
+	# 2026-11-11: Compact search payload – id, navn and livsløp status text.
+	return [
+		{
+			"id": system.pk,
+			"navn": system.systemnavn,
+			"livslop_status": system.get_livslop_status_display(),
+		}
+		for system in systemer
+	]
 
 
 @csrf_exempt
