@@ -1,5 +1,6 @@
 {% extends "admin_index.html" %}
-{# 2026-11-11: List session-auth /api/klientside/kiprotokoll/ under KI-protokoll. #}
+{# 2026-11-11: Removed /api/klientside/kiprotokoll/ and GET /api/kiprotokoll/; only POST search remains. #}
+{# 2026-11-11: POST /api/kiprotokoll/search/ – epost or virksomhet → [{id, navn}, ...]. #}
 {# 2026-11-10: List /api/kiprotokoll/ under KI-protokoll. #}
 {% load humanize %}
 {% load static %}
@@ -17,8 +18,7 @@
 
 <h6>KI-protokoll</h6>
 <ul>
-	<li><a href="/api/kiprotokoll/">/api/kiprotokoll/</a> (API-nøkkel)</li>
-	<li><a href="/api/klientside/kiprotokoll/">/api/klientside/kiprotokoll/</a> (innlogget bruker)</li>
+	<li><code>POST /api/kiprotokoll/search/</code> (API-nøkkel + JSON <code>epost</code> eller <code>virksomhet</code>)</li>
 </ul>
 
 <h6>Vann og avløp-integrasjon</h6>

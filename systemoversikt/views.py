@@ -15353,31 +15353,51 @@ def api_systemer_optimized(request):  # tjeneste- og systemoversikt
 	return JsonResponse(resultat, safe=False, status=200)
 
 
-def _kiprotokoll_resultat():
-	# 2026-11-11: Shared payload for API-key and session-authenticated KI-protokoll endpoints.
-	runtime_t0 = time.time()
-	data = []
-	delta = round(time.time() - runtime_t0, 3)
-	return {
-		"beskrivelse": "KI-protokoll innsamling fra Kartoteket. Ingen data per nå.",
-		"antall": 0,
-		"kjoretid": f"{delta}",
-		"data": data,
-	}
-
-
-def api_kiprotokoll(request):
-	# 2026-11-10: Stub JSON endpoint for KI-protokoll collection; empty data until payload is defined.
-	# 2026-11-11: Log failed/missing API key attempts so they appear on /admin/logger/api/.
-	# 2026-11-11: Shared payload via _kiprotokoll_resultat() so klientside variant stays in sync.
-	if request.method != "GET":
-		raise Http404
-
+def _kiprotokoll_sjekk_api_nokkel(request):
+	# 2026-11-11: Shared API-key check for KI-protokoll endpoints (APIKeys navn ki_protokoll_innsamling).
 	key = request.headers.get("key")
 	allowed_keys = APIKeys.objects.filter(navn="ki_protokoll_innsamling").values_list("key", flat=True)
-	if key not in allowed_keys:
+	return key in allowed_keys
+
+
+def _kiprotokoll_systemer_for_epost(epost):
+	# 2026-11-11: Systems where e-mail is systemforvalter (person); exclude livsløp 6–7.
+	return (
+		System.objects.filter(
+			systemforvalter_kontaktpersoner_referanse__brukernavn__email__iexact=(epost or "").strip()
+		)
+		.exclude(livslop_status__in=LIVSLOP_UTE_AV_BRUK)
+		.distinct()
+		.order_by("systemnavn")
+	)
+
+
+def _kiprotokoll_systemer_for_virksomhet(virksomhet):
+	# 2026-11-11: Systems where organizational systemforvalter matches virksomhetsforkortelse; exclude livsløp 6–7.
+	return (
+		System.objects.filter(
+			systemforvalter__virksomhetsforkortelse__iexact=(virksomhet or "").strip()
+		)
+		.exclude(livslop_status__in=LIVSLOP_UTE_AV_BRUK)
+		.order_by("systemnavn")
+	)
+
+
+def _kiprotokoll_system_liste(systemer):
+	# 2026-11-11: Compact search payload – id + navn only.
+	return [{"id": system.pk, "navn": system.systemnavn} for system in systemer]
+
+
+@csrf_exempt
+def api_kiprotokoll_search(request):
+	# 2026-11-11: Removed GET /api/kiprotokoll/ and /api/klientside/kiprotokoll/ – only this POST search remains.
+	# 2026-11-11: POST search – body {"epost": "..."} or {"virksomhet": "DIG"}; returns [{id, navn}, ...].
+	if request.method != "POST":
+		raise Http404
+
+	if not _kiprotokoll_sjekk_api_nokkel(request):
 		ApplicationLog.objects.create(
-			event_type="api_kiprotokoll",
+			event_type="api_kiprotokoll_search",
 			message=f"Feil eller tom API-nøkkel fra {get_client_ip(request)}"
 		)
 		return JsonResponse(
@@ -15385,45 +15405,47 @@ def api_kiprotokoll(request):
 			safe=False, status=403
 		)
 
-	ApplicationLog.objects.create(
-		event_type="api_kiprotokoll",
-		message=f"Innkommende kall fra {get_client_ip(request)}"
-	)
-
-	resultat = _kiprotokoll_resultat()
-
-	ApplicationLog.objects.create(
-		event_type="api_kiprotokoll",
-		message=f"kallet fra {get_client_ip(request)} tok {resultat['kjoretid']} sekunder."
-	)
-	return JsonResponse(resultat, safe=False, status=200)
-
-
-def api_klientside_kiprotokoll(request):
-	# 2026-11-11: Session-auth variant of /api/kiprotokoll/ for browser clients (no API key).
-	# 2026-11-11: Include caller UPN (User.email) so client-side consumers can identify the user.
-	if request.method != "GET":
-		raise Http404
-
-	if not request.user.is_authenticated:
+	try:
+		payload = json.loads(request.body.decode("utf-8") or "{}")
+	except (TypeError, ValueError, UnicodeDecodeError):
 		return JsonResponse(
-			{"message": "Authentication required", "data": None},
-			safe=False, status=401
+			{"message": "Ugyldig JSON i request body", "data": None},
+			safe=False, status=400
+		)
+
+	if not isinstance(payload, dict):
+		return JsonResponse(
+			{"message": "Request body må være et JSON-objekt", "data": None},
+			safe=False, status=400
+		)
+
+	epost = payload.get("epost")
+	virksomhet = payload.get("virksomhet")
+	har_epost = bool(epost and str(epost).strip())
+	har_virksomhet = bool(virksomhet and str(virksomhet).strip())
+
+	if har_epost and har_virksomhet:
+		return JsonResponse(
+			{"message": "Angi enten 'epost' eller 'virksomhet', ikke begge", "data": None},
+			safe=False, status=400
+		)
+	if not har_epost and not har_virksomhet:
+		return JsonResponse(
+			{"message": "Angi 'epost' eller 'virksomhet' i request body", "data": None},
+			safe=False, status=400
 		)
 
 	ApplicationLog.objects.create(
-		event_type="api_klientside_kiprotokoll",
-		message=f"Innkommende kall fra {get_client_ip(request)} (bruker {request.user})"
+		event_type="api_kiprotokoll_search",
+		message=f"Innkommende kall fra {get_client_ip(request)}"
 	)
 
-	resultat = _kiprotokoll_resultat()
-	resultat["upn"] = request.user.email or None
+	if har_epost:
+		systemer = _kiprotokoll_systemer_for_epost(epost)
+	else:
+		systemer = _kiprotokoll_systemer_for_virksomhet(virksomhet)
 
-	ApplicationLog.objects.create(
-		event_type="api_klientside_kiprotokoll",
-		message=f"kallet fra {get_client_ip(request)} tok {resultat['kjoretid']} sekunder."
-	)
-	return JsonResponse(resultat, safe=False, status=200)
+	return JsonResponse(_kiprotokoll_system_liste(systemer), safe=False, status=200)
 
 
 def api_systemtyper(request): #tjeneste- og systemoversikt
