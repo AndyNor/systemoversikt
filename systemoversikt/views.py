@@ -11674,6 +11674,7 @@ def _hrorg_enheter_tre(virksomhet_pk, max_child_depth=3):
 
 def virksomhet(request, pk):
 	#Vise detaljer om en valgt virksomhet
+	# 2026-11-16: Show separate missing-forvalter-person counts for forvalter and drifter.
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render_access_denied(request, required_permissions)
@@ -11694,6 +11695,20 @@ def virksomhet(request, pk):
 	ant_systemer_bruk = SystemBruk.objects.filter(brukergruppe=pk).count()
 	ant_systemer_eier = System.objects.filter(systemeier=pk).count()
 	ant_systemer_forvalter = System.objects.filter(systemforvalter=pk).count()
+	# 2026-11-16: Separate missing-forvalter-person counts for forvalter vs drifter (not bruker; exclude livsløp 6/7).
+	ant_mangler_forvalter_person_forvalter = (
+		System.objects.filter(systemforvalter=pk)
+		.exclude(livslop_status__in=LIVSLOP_UTE_AV_BRUK)
+		.filter(systemforvalter_kontaktpersoner_referanse=None)
+		.count()
+	)
+	ant_mangler_forvalter_person_drifter = (
+		System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=pk)
+		.filter(~Q(ibruk=False))
+		.exclude(livslop_status__in=LIVSLOP_UTE_AV_BRUK)
+		.filter(systemforvalter_kontaktpersoner_referanse=None)
+		.count()
+	)
 	# 2026-06-08: Avdelinger tree with three child levels for virksomhet_detaljer.
 	enheter_tre = _hrorg_enheter_tre(virksomhet.pk)
 	enheter_tre_mid = (len(enheter_tre) + 1) // 2
@@ -11737,6 +11752,8 @@ def virksomhet(request, pk):
 		'ant_systemer_bruk': ant_systemer_bruk,
 		'ant_systemer_eier': ant_systemer_eier,
 		'ant_systemer_forvalter': ant_systemer_forvalter,
+		'ant_mangler_forvalter_person_forvalter': ant_mangler_forvalter_person_forvalter,
+		'ant_mangler_forvalter_person_drifter': ant_mangler_forvalter_person_drifter,
 		'systemer_drifter': systemer_drifter,
 		'kritiske_funksjoner_rader': kritiske_funksjoner_rader,
 		"virksomhet": virksomhet,
