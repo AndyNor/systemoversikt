@@ -7062,11 +7062,28 @@ def tjenestekatalogen_systemer_api(request):
 
 def alle_ansvarlige(request):
 	#Viser informasjon om alle ansvarlige
+	# 2026-11-16: Same antall_systemforvalter annotate as virksomhet_ansvarlige (shared template).
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render_access_denied(request, required_permissions)
 
-	ansvarlige = Ansvarlig.objects.all().order_by('brukernavn__first_name')
+	ansvarlige = (
+		Ansvarlig.objects
+		.annotate(
+			antall_systemforvalter=Count(
+				'system_forvalter_for',
+				filter=~Q(system_forvalter_for__livslop_status__in=LIVSLOP_UTE_AV_BRUK),
+				distinct=True,
+			),
+			# 2026-11-16: Separate badge for phased-out systems (livslop 6/7).
+			antall_systemforvalter_utfaset=Count(
+				'system_forvalter_for',
+				filter=Q(system_forvalter_for__livslop_status__in=LIVSLOP_UTE_AV_BRUK),
+				distinct=True,
+			),
+		)
+		.order_by('brukernavn__first_name')
+	)
 
 	return render(request, 'ansvarlig_alle.html', {
 		'request': request,
@@ -10137,6 +10154,7 @@ def tjenestedetaljer(request, pk):
 
 
 def virksomhet_ansvarlige(request, pk=None):
+	# 2026-11-16: Annotate antall_systemforvalter so the list can badge people with system-forvalter roles.
 
 	if pk == None:
 		try:
@@ -10153,7 +10171,24 @@ def virksomhet_ansvarlige(request, pk=None):
 		return render_access_denied(request, required_permissions)
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
-	ansvarlige = Ansvarlig.objects.filter(brukernavn__profile__virksomhet=pk).order_by('brukernavn__first_name')
+	# 2026-11-16: Count active vs utfaset (livslop 6/7) systems as systemforvalter.
+	ansvarlige = (
+		Ansvarlig.objects
+		.filter(brukernavn__profile__virksomhet=pk)
+		.annotate(
+			antall_systemforvalter=Count(
+				'system_forvalter_for',
+				filter=~Q(system_forvalter_for__livslop_status__in=LIVSLOP_UTE_AV_BRUK),
+				distinct=True,
+			),
+			antall_systemforvalter_utfaset=Count(
+				'system_forvalter_for',
+				filter=Q(system_forvalter_for__livslop_status__in=LIVSLOP_UTE_AV_BRUK),
+				distinct=True,
+			),
+		)
+		.order_by('brukernavn__first_name')
+	)
 	return render(request, 'ansvarlig_alle.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
