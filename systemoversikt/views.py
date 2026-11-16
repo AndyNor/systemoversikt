@@ -15361,20 +15361,16 @@ def _kiprotokoll_sjekk_api_nokkel(request):
 
 
 def _kiprotokoll_systemer_for_epost(epost):
-	# 2026-11-16: Resolve person by e-mail → their virksomhet → all systems that virksomhet forvalter.
-	# 2026-11-11: Previously filtered by personal systemforvalter contact; now organisational forvalter.
-	epost = (epost or "").strip()
-	if not epost:
-		return System.objects.none()
-	bruker = (
-		User.objects.filter(email__iexact=epost)
-		.select_related("profile", "profile__virksomhet")
-		.first()
+	# 2026-11-16: Reverted to personal systemforvalter – virksomhet-wide list was too heavy for external form.
+	# 2026-11-11: Systems where e-mail is systemforvalter (person); exclude livsløp 6–7.
+	return (
+		System.objects.filter(
+			systemforvalter_kontaktpersoner_referanse__brukernavn__email__iexact=(epost or "").strip()
+		)
+		.exclude(livslop_status__in=LIVSLOP_UTE_AV_BRUK)
+		.distinct()
+		.order_by("systemnavn")
 	)
-	virksomhet = getattr(getattr(bruker, "profile", None), "virksomhet", None) if bruker else None
-	if not virksomhet:
-		return System.objects.none()
-	return _kiprotokoll_systemer_for_virksomhet(virksomhet.virksomhetsforkortelse)
 
 
 def _kiprotokoll_systemer_for_virksomhet(virksomhet):
@@ -15402,7 +15398,7 @@ def _kiprotokoll_system_liste(systemer):
 
 @csrf_exempt
 def api_kiprotokoll_search(request):
-	# 2026-11-16: epost resolves to person's virksomhet and returns systems that virksomhet forvalter.
+	# 2026-11-16: epost again returns only systems where person is direct systemforvalter (not virksomhet-wide).
 	# 2026-11-11: Removed GET /api/kiprotokoll/ and /api/klientside/kiprotokoll/ – only this POST search remains.
 	# 2026-11-11: POST search – body {"epost": "..."} or {"virksomhet": "DIG"}; returns [{id, navn}, ...].
 	if request.method != "POST":
