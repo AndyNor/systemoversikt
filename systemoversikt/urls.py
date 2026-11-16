@@ -2,6 +2,7 @@
 The `urlpatterns` list routes URLs to views. For more information please see:
 	https://docs.djangoproject.com/en/1.11/topics/http/urls/
 """
+# 2026-11-16: epost on /api/kiprotokoll/search/ → person's virksomhet → systems that virksomhet forvalter.
 # 2026-11-11: Removed GET /api/kiprotokoll/ and /api/klientside/kiprotokoll/ – only POST search remains.
 # 2026-11-11: POST /api/kiprotokoll/search/ – body epost or virksomhet; returns [{id, navn}, ...].
 # 2026-11-10: Stub JSON API at /api/kiprotokoll/ (APIKeys navn ki_protokoll_innsamling); empty data for now.
