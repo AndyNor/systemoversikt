@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-23: annotate_scope_list – Count(scenarios, distinct=True) so search joins do not inflate scenario counts.
 # 2026-08-13: search_scopes – also match scenario and tiltak text so collections are findable by content.
 # 2026-08-13: readable_scope_ids_for_user / actions_visible_to_user / unntak_visible_to_user for global lists.
 # 2026-07-09: create_risk_scope – log scope_created to RiskActivityLog.
@@ -312,9 +313,11 @@ def user_can_set_virksomhet_read_only_flag(user, virksomhet):
 
 
 def annotate_scope_list(qs, user):
+	# 2026-11-23: distinct=True – text search joins scenarios/actions (and membership lists join members),
+	# which would otherwise multiply Count('scenarios') (e.g. 8 → 288 for dnssec).
 	if not user.is_authenticated:
 		return qs.annotate(
-			scenario_count=Count('scenarios'),
+			scenario_count=Count('scenarios', distinct=True),
 			current_user_is_direct_member=Value(False, output_field=BooleanField()),
 			current_user_is_group_participant=Value(False, output_field=BooleanField()),
 			current_user_is_owner=Value(False, output_field=BooleanField()),
@@ -342,7 +345,7 @@ def annotate_scope_list(qs, user):
 		group__virksomhet_read_only=True,
 	)
 	qs = qs.annotate(
-		scenario_count=Count('scenarios'),
+		scenario_count=Count('scenarios', distinct=True),
 		current_user_is_direct_member=Exists(member_qs),
 		current_user_is_group_participant=Exists(group_participant_qs),
 		current_user_is_owner=Exists(owner_qs),
