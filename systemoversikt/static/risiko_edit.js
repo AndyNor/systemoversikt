@@ -1,4 +1,5 @@
 // Change log:
+// 2026-11-23: Scenario table rebuild – truncate uonsket_hendelse at 160 chars (was 80).
 // 2026-09-30: Scenario modal shows compact read-only Risikosammenstilling mappings (reverse kartlegging).
 // 2026-09-30: Tiltak status select in scenario modal gets light background color per status.
 // 2026-09-08: Guard captureScopeMetaSnapshot when title field missing; cache-bust via template.
@@ -1961,7 +1962,7 @@
         tbody.insertAdjacentHTML('beforeend',
           '<tr class="risiko-scenario-row" data-scenario-id="' + scenario.id + '" style="cursor:pointer">' +
           '<td>' + escapeHtml(scenario.display_risk_id || '') + '</td>' +
-          '<td>' + escapeHtml((scenario.uonsket_hendelse || '').substring(0, 80)) + '</td>' +
+          '<td>' + escapeHtml((scenario.uonsket_hendelse || '').substring(0, 160)) + '</td>' +
           '<td class="risiko-systemer-cell">' + systemsHtml + '</td>' +
           '<td class="risiko-kit-cell">' + kitHtml + '</td>' +
           '<td class="risiko-konsekvenstype-cell">' + konsekvenstypeHtml + '</td>' +

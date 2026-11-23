@@ -1,3 +1,4 @@
+{# 2026-11-23: Scenario table – allow more text in truncated Uønsket hendelse (80 → 160). #}
 {# 2026-10-12: Cache-bust risiko_api.js – stop mislabeling HTML 500 as session expiry. #}
 {# 2026-09-30: Scenario modal – compact read-only Risikosammenstilling mappings between Uønsket hendelse and Årsaker/svakheter. #}
 {# 2026-09-30: Tiltak status select in scenario modal – light background color per status. #}
@@ -279,7 +280,7 @@
 {% for scenario in scenarios %}
 <tr class="{% if can_edit_scope %}risiko-scenario-row{% endif %}" data-scenario-id="{{ scenario.pk }}" {% if can_edit_scope %}style="cursor:pointer"{% endif %}>
 	<td>{{ scenario.display_risk_id }}</td>
-	<td>{{ scenario.uonsket_hendelse|truncatechars:80 }}</td>
+	<td>{{ scenario.uonsket_hendelse|truncatechars:160 }}</td>
 	<td class="risiko-systemer-cell">
 		{% for system in scenario.systemer.all %}
 			{% risiko_system_link system stop_propagation=True %}{% if not forloop.last %}, {% endif %}
