@@ -5047,21 +5047,47 @@ def alle_vip(request):
 
 def nettverk_detaljer(request, pk):
 	#Vise brannmuråpninger koblet til et nettverk
+	# 2026-11-25: Paginate IP list (1000/page) with prefetch – avoids timeout on large master containers.
 	required_permissions = ['systemoversikt.view_brannmurregel']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render_access_denied(request, required_permissions)
 
+	IP_PAGE_SIZE = 1000
+	config_maximum_mark_server = 100
+
 	nettverk = NetworkContainer.objects.get(pk=pk)
-	network_ip_addresses = nettverk.network_ip_address.all().order_by('ip_address_integer')
+	qs = (
+		nettverk.network_ip_address
+		.all()
+		.order_by('ip_address_integer')
+		.prefetch_related(
+			'servere__service_offerings',
+			'viper',
+			'vip_pools__vip',
+			'dns',
+		)
+	)
+	paginator = Paginator(qs, IP_PAGE_SIZE)
+	page_obj = paginator.get_page(request.GET.get('page', '1'))
+	total_count = paginator.count
 	firewall_openings = nettverk.firewall_rules.filter(active=True)
+	firewall_count = firewall_openings.count()
+	highlight_ip_addresses = (
+		list(qs.values_list('ip_address', flat=True))
+		if total_count < config_maximum_mark_server
+		else []
+	)
 
 	return render(request, 'cmdb_nettverk_detaljer.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'nettverk': nettverk,
-		'network_ip_addresses': network_ip_addresses,
+		'page_obj': page_obj,
+		'total_count': total_count,
 		'firewall_openings': firewall_openings,
-		'config_maximum_mark_server': 100,
+		'firewall_count': firewall_count,
+		'highlight_ip_addresses': highlight_ip_addresses,
+		'config_maximum_mark_server': config_maximum_mark_server,
 		'integrasjonsstatus': _integrasjonsstatus("sp_network_eq"),
 	})
 
