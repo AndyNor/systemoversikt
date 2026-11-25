@@ -1,3 +1,4 @@
+{# 2026-11-25: Hide sort_order (#N) under platform name – sequence not needed in the list. #}
 {# 2026-11-25: Show forvalter_kontaktpersoner_referanse (person forvalter) under each platform. #}
 {# 2026-11-05: Styled platform table under graph (type stripe, badges, panel). #}
 {# 2026-11-05: Dual in-node badges; virksomhet filter; taller chart; type colors (no gradients). #}
@@ -226,10 +227,6 @@
 .driftsmodell-table .dm-empty {
 	color: #b0aec0;
 }
-.driftsmodell-table .dm-meta {
-	color: #6c6a7c;
-	font-size: 0.85rem;
-}
 .driftsmodell-table .dm-comment {
 	max-width: 260px;
 	color: #555;
@@ -362,7 +359,6 @@
 						{% include "ansvarlig_include_vis.html" with ansvarlige=item.forvalter_kontaktpersoner_referanse.all %}
 					</div>
 				{% endif %}
-				<span class="dm-meta" title="{% get_verbose_field_name driftsmodell_felt_referanse 'sort_order' %}">#{{ item.sort_order }}</span>
 				<div class="dm-tags">
 					<span class="dm-tag dm-tag-type" style="background-color: {{ item.plattform_farge }};">{{ item.get_type_plattform_display }}</span>
 				</div>
