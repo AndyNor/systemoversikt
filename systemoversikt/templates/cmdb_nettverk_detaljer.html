@@ -9,6 +9,34 @@
 	Nettverksdetaljer for {{ nettverk.comment }} - {{ nettverk.ip_address }}/{{ nettverk.subnet_mask }} {% if vlan.disabled %} (deaktivert) {% endif %}
 {% endblock overskrift %}
 
+{% block ekstrastyle %}
+{# 2026-11-25: Override global nav { color:#F8F0DD } so jump menu stays readable on white. #}
+<style nonce="{{ request.csp_nonce }}">
+.nettverk-hopp-til {
+	margin-bottom: 1rem;
+	color: #212529;
+}
+.nettverk-hopp-til a:link,
+.nettverk-hopp-til a:visited {
+	color: #28277e;
+	font-weight: 500;
+	text-decoration: underline;
+	background-color: transparent;
+}
+.nettverk-hopp-til a:hover,
+.nettverk-hopp-til a:focus {
+	color: #FF8274;
+	font-weight: 500;
+	text-decoration: underline;
+	background-color: transparent;
+}
+#anchor_enheter,
+#anchor_brannmurregler {
+	scroll-margin-top: 1rem;
+}
+</style>
+{% endblock ekstrastyle %}
+
 {% block hovedinnhold %}
 
 {% include "includes/integrasjon_freshness_line.html" with label="Nettverksdata ble sist synkronisert" %}
@@ -22,7 +50,7 @@
 		{% endif %}
 	</p>
 
-	<nav class="mb-3" aria-label="Hopp til seksjon">
+	<nav class="nettverk-hopp-til" aria-label="Hopp til seksjon">
 		<strong>Hopp til:</strong>
 		<a href="#anchor_enheter">Enheter ({{ total_count|intcomma }})</a>
 		·
