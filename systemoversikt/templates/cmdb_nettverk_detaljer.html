@@ -14,6 +14,7 @@
 {% include "includes/integrasjon_freshness_line.html" with label="Nettverksdata ble sist synkronisert" %}
 
 	{# 2026-11-25: Paginated IP table (1000/page) – avoids timeout on large containers. #}
+	{# 2026-11-25: Jump menu + pagination above/below table for long pages. #}
 	<p>
 		Fant {{ total_count|intcomma }} enheter med IP-adresse og {{ firewall_count|intcomma }} brannmuråpninger tilknyttet nettverket.
 		{% if page_obj.paginator.num_pages > 1 %}
@@ -21,8 +22,30 @@
 		{% endif %}
 	</p>
 
+	<nav class="mb-3" aria-label="Hopp til seksjon">
+		<strong>Hopp til:</strong>
+		<a href="#anchor_enheter">Enheter ({{ total_count|intcomma }})</a>
+		·
+		<a href="#anchor_brannmurregler">Brannmurregler ({{ firewall_count|intcomma }})</a>
+	</nav>
+
 	<hr>
-	<h5>Enheter i nettverket</h5>
+	<h5 id="anchor_enheter">Enheter i nettverket</h5>
+
+	{% if page_obj.paginator.num_pages > 1 %}
+	<nav aria-label="Sidetall enheter">
+		<ul class="pagination pagination-sm">
+			{% if page_obj.has_previous %}
+			<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}#anchor_enheter">Forrige</a></li>
+			{% endif %}
+			<li class="page-item disabled"><span class="page-link">Side {{ page_obj.number }} av {{ page_obj.paginator.num_pages }}</span></li>
+			{% if page_obj.has_next %}
+			<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}#anchor_enheter">Neste</a></li>
+			{% endif %}
+		</ul>
+	</nav>
+	{% endif %}
+
 	<table class="table table-sm tablesorter excel">
 	<thead>
 		<th>IP-adresse</th>
@@ -75,14 +98,14 @@
 	</table>
 
 	{% if page_obj.paginator.num_pages > 1 %}
-	<nav>
+	<nav aria-label="Sidetall enheter">
 		<ul class="pagination pagination-sm">
 			{% if page_obj.has_previous %}
-			<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Forrige</a></li>
+			<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}#anchor_enheter">Forrige</a></li>
 			{% endif %}
 			<li class="page-item disabled"><span class="page-link">Side {{ page_obj.number }} av {{ page_obj.paginator.num_pages }}</span></li>
 			{% if page_obj.has_next %}
-			<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Neste</a></li>
+			<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}#anchor_enheter">Neste</a></li>
 			{% endif %}
 		</ul>
 	</nav>
@@ -90,7 +113,7 @@
 
 
 	<hr>
-	<h5>Brannmurregler knyttet til nettverket</h5>
+	<h5 id="anchor_brannmurregler">Brannmurregler knyttet til nettverket</h5>
 	<table class="table table-sm tablesorter excel">
 	<thead>
 		<th>Regel ID</th>
