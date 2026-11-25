@@ -1,3 +1,4 @@
+{# 2026-11-25: Roller-tabell – Driftsplattform-forvalter via driftsmodell_forvalter_for. #}
 {# 2026-10-01: Profile header as cards instead of a single-row table – better use of width and overview. #}
 {# 2026-10-01: On-demand AD phone lookup button (bruker_telefon) – phone numbers are not synced to the database. #}
 {# 2026-10-01: Fixed Nærmeste leder never showing – url_leder was checked before it was defined. #}
@@ -338,6 +339,19 @@
 				{% url 'avtaledetaljer' pk=avtale.pk as url_avtale %}
 				<td><a target="_blank" href="{{ url_avtale }}">{{ avtale }}</a></td>
 				<td></td>
+			</tr>
+			{% endfor %}
+
+			{# 2026-11-25: Person forvalter on Driftsmodell (related_name driftsmodell_forvalter_for). #}
+			{% for plattform in user.ansvarlig_brukernavn.driftsmodell_forvalter_for.all %}
+			<tr>
+				<td>Driftsplattform-forvalter for</td>
+				{% url 'detaljer_driftsmodell' pk=plattform.pk as url_driftsplattform %}
+				<td><a target="_blank" href="{{ url_driftsplattform }}">{{ plattform.navn }}</a></td>
+				<td>
+					{% if plattform.ansvarlig_virksomhet %}<b>Forvalter (virksomhet)</b>: {{ plattform.ansvarlig_virksomhet }}{% endif %}
+					{% if plattform.get_type_plattform_display %}{% if plattform.ansvarlig_virksomhet %}<br>{% endif %}<b>Type</b>: {{ plattform.get_type_plattform_display }}{% endif %}
+				</td>
 			</tr>
 			{% endfor %}
 

@@ -1,3 +1,4 @@
+{# 2026-11-25: Show forvalter_kontaktpersoner_referanse (person forvalter) under each platform. #}
 {# 2026-11-05: Styled platform table under graph (type stripe, badges, panel). #}
 {# 2026-11-05: Dual in-node badges; virksomhet filter; taller chart; type colors (no gradients). #}
 {# 2026-11-05: Platform graph heat = tilgjengelighetsvurdering; count badges; no global doughnut. #}
@@ -354,6 +355,12 @@
 				{% if item.ansvarlig_virksomhet %}
 					{% url 'driftsmodell_virksomhet' pk=item.ansvarlig_virksomhet.pk as url_detaljer_virksomhet %}
 					<a href="{{ url_detaljer_virksomhet }}" class="badge badge-light border driftsmodell-virksomhet-tag" title="{{ item.ansvarlig_virksomhet }}">{{ item.ansvarlig_virksomhet.virksomhetsforkortelse }}</a>
+				{% endif %}
+				{# 2026-11-25: Person forvalter(s) next to virksomhet badge. #}
+				{% if item.forvalter_kontaktpersoner_referanse.all %}
+					<div class="dm-forvalter-personer small mt-1">
+						{% include "ansvarlig_include_vis.html" with ansvarlige=item.forvalter_kontaktpersoner_referanse.all %}
+					</div>
 				{% endif %}
 				<span class="dm-meta" title="{% get_verbose_field_name driftsmodell_felt_referanse 'sort_order' %}">#{{ item.sort_order }}</span>
 				<div class="dm-tags">

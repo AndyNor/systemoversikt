@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-25: DriftsmodellAdmin – forvalter_kontaktpersoner_referanse (Ansvarlig M2M) in fieldset + autocomplete.
 # 2026-11-11: System admin – driftsplattform beside systemnavn; risikovurdering under Grunnleggende.
 # 2026-11-11: System admin – required fields in top fieldset «Obligatoriske opplysninger».
 # 2026-11-11: Remove System.er_arkiv / dato from admin – electronic-archive approval only on GodkjentElektroniskArkiv.
@@ -1455,7 +1456,8 @@ class DriftsmodellAdmin(SimpleHistoryAdmin):
 	list_display = ('navn', 'kommentar', 'ansvarlig_virksomhet', 'type_plattform')
 	search_fields = ('navn',)
 	filter_horizontal = ('leverandor', 'underleverandorer', 'avtaler')
-	autocomplete_fields = ('ansvarlig_virksomhet', 'leverandor', 'applikasjonsdriftleverandor',)
+	# 2026-11-25: Person forvalter via Ansvarlig autocomplete (same as System).
+	autocomplete_fields = ('ansvarlig_virksomhet', 'forvalter_kontaktpersoner_referanse', 'leverandor', 'applikasjonsdriftleverandor',)
 
 	def response_add(self, request, obj, post_url_continue=None):
 		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
@@ -1475,6 +1477,7 @@ class DriftsmodellAdmin(SimpleHistoryAdmin):
 				'fields': (
 					('navn', 'sort_order'),
 					'ansvarlig_virksomhet',
+					'forvalter_kontaktpersoner_referanse',
 					'leverandor',
 					'underleverandorer',
 					'applikasjonsdriftleverandor',

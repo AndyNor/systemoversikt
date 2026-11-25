@@ -12458,6 +12458,7 @@ def alle_leverandorer(request):
 
 def alle_driftsmodeller(request):
 	#Vise liste over alle driftsmodeller
+	# 2026-11-25: Prefetch forvalter_kontaktpersoner_referanse (person forvalter) for overview list.
 	# 2026-11-05: Dual in-node badges (system + høy tilgjengelighet); virksomhet filter sidebar; type colors.
 	# 2026-11-05: Overview graph heat = tilgjengelighetsvurdering per platform; count badges; no global doughnut.
 	# 2026-06-22: Prefetch related fields and annotate system count – full model data on alle-page.
@@ -12478,6 +12479,10 @@ def alle_driftsmodeller(request):
 			'leverandor',
 			'underleverandorer',
 			'avtaler',
+			Prefetch(
+				'forvalter_kontaktpersoner_referanse',
+				queryset=Ansvarlig.objects.select_related('brukernavn', 'brukernavn__profile'),
+			),
 		).order_by('sort_order', 'navn')
 	)
 
@@ -13023,6 +13028,7 @@ def _driftsmodell_plattform_graf(
 
 def detaljer_driftsmodell(request, pk):
 	#Vise detaljer om en valgt driftsmodell (inkl. systemer tilknyttet)
+	# 2026-11-25: Prefetch forvalter_kontaktpersoner_referanse for person forvalter on detail page.
 	# 2026-11-05: Merged systems + forvalter filter; isolert tag; tilgjengelighet column.
 	# 2026-11-05: Tilgjengelighet doughnut; comment first; tags; jump nav; isolert vs vanlige.
 	# 2026-11-05: Cytoscape platform neighborhood + Chart.js D1–D5 counts + virksomhet tags.
@@ -13039,6 +13045,10 @@ def detaljer_driftsmodell(request, pk):
 			Prefetch(
 				'driftsmodell_overordnet_plattform',
 				queryset=Driftsmodell.objects.select_related('ansvarlig_virksomhet').order_by('navn'),
+			),
+			Prefetch(
+				'forvalter_kontaktpersoner_referanse',
+				queryset=Ansvarlig.objects.select_related('brukernavn', 'brukernavn__profile'),
 			),
 			'leverandor',
 			'underleverandorer',

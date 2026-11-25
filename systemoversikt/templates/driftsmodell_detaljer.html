@@ -1,3 +1,4 @@
+{# 2026-11-25: Show forvalter_kontaktpersoner_referanse under Om plattformen. #}
 {# 2026-11-05: Merged system list + forvalter filter; isolert as tag; tilgj. column. #}
 {# 2026-11-05: Generelt merged into info panel; compact system lists. #}
 {# 2026-11-05: Comment first; tilgjengelighet chart; tags; jump nav to system lists. #}
@@ -451,6 +452,15 @@
 						{% url 'driftsmodell_virksomhet' pk=driftsmodell.ansvarlig_virksomhet.pk as url_ansvarlig %}
 						<a href="{{ url_ansvarlig }}" class="badge badge-light border driftsmodell-virksomhet-tag" title="{{ driftsmodell.ansvarlig_virksomhet }}">{{ driftsmodell.ansvarlig_virksomhet.virksomhetsforkortelse }}</a>
 						<span class="small text-muted">{{ driftsmodell.ansvarlig_virksomhet.virksomhetsnavn }}</span>
+					{% else %}
+						<span class="dm-empty">–</span>
+					{% endif %}
+				</dd>
+				{# 2026-11-25: Person forvalter(s) – same Ansvarlig pattern as System. #}
+				<dt>Forvalter (personer)</dt>
+				<dd>
+					{% if driftsmodell.forvalter_kontaktpersoner_referanse.all %}
+						{% include "ansvarlig_include_vis.html" with ansvarlige=driftsmodell.forvalter_kontaktpersoner_referanse.all %}
 					{% else %}
 						<span class="dm-empty">–</span>
 					{% endif %}

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-25: Driftsmodell.forvalter_kontaktpersoner_referanse – M2M to Ansvarlig (person forvalter), same pattern as System.
 # 2026-11-11: Remove System.er_arkiv / dato_godkjent_elektronisk_arkiv – approval lives only on GodkjentElektroniskArkiv.
 # 2026-11-10: IntegrasjonKonfigurasjon – Service Now sources yellow after 2 days, red after 4; menu uses freshness.
 # 2026-11-04: GodkjentElektroniskArkiv.lagrer_ikke_dokumentasjon – assessed component that does not store documentation.
@@ -5230,6 +5231,14 @@ class Driftsmodell(models.Model):
 			blank=True,
 			null=True,
 			help_text=u"Virksomhet som forvalter driftsplattformen (f.eks. DIG eller sektor/virksomhet).",
+			)
+	# 2026-11-25: Person-level forvalter(s) – mirrors System.systemforvalter_kontaktpersoner_referanse.
+	forvalter_kontaktpersoner_referanse = models.ManyToManyField(
+			to=Ansvarlig,
+			related_name='driftsmodell_forvalter_for',
+			verbose_name="Forvalter (personer)",
+			blank=True,
+			help_text=u"Person(er) med operativt forvalteransvar for driftsplattformen. Hvis du ikke finner personen du leter etter, kan du legge til med +-tegnet.",
 			)
 	kommentar = models.TextField(
 			verbose_name="Kommentarer til modellen",
