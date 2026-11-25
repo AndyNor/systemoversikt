@@ -1,4 +1,5 @@
 // Change log:
+// 2026-11-25: After tiltak create, swap unntak placeholder for real UI; Legg til next to Unntak label.
 // 2026-11-25: Scenario modal – unlink Risikosammenstilling mapping when API sets can_unlink (same gates as link_delete).
 // 2026-11-23: Scenario table rebuild – truncate uonsket_hendelse at 160 chars (was 80).
 // 2026-09-30: Scenario modal shows compact read-only Risikosammenstilling mappings (reverse kartlegging).
@@ -1404,7 +1405,7 @@
         '<strong class="small mb-0">Unntak' +
         (count ? ' <span class="badge badge-light border">' + count + '</span>' : '') +
         '</strong>' +
-        '<button type="button" class="btn btn-outline-secondary btn-sm ml-auto risiko-unntak-toggle-form">Legg til</button>' +
+        '<button type="button" class="btn btn-outline-secondary btn-sm ml-1 risiko-unntak-toggle-form">Legg til</button>' +
         '</div>' +
         listHtml +
         '<div class="risiko-unntak-form d-none border rounded p-2 bg-light">' +
@@ -1415,6 +1416,15 @@
         }) +
         '<button type="button" class="btn btn-primary btn-sm risiko-unntak-save">Lagre unntak</button>' +
         '</div></div>';
+    }
+
+    function replaceActionUnntakBlock(card, action) {
+      const block = card.querySelector('.risiko-action-unntak');
+      if (!block) return;
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = buildActionUnntakHtml(action);
+      const next = wrapper.firstChild;
+      if (next) block.replaceWith(next);
     }
 
     function unntakListCreateUrl(actionId) {
@@ -1430,16 +1440,11 @@
     function refreshActionUnntakBlock(card, actionId) {
       if (!config.urls.unntakListCreate) return Promise.resolve();
       return fetchJson(unntakListCreateUrl(actionId)).then(function (data) {
-        const block = card.querySelector('.risiko-action-unntak');
-        if (!block) return;
-        const action = {
+        replaceActionUnntakBlock(card, {
           id: actionId,
           unntak: data.unntak || [],
           unntak_count: (data.unntak || []).length,
-        };
-        const wrapper = document.createElement('div');
-        wrapper.innerHTML = buildActionUnntakHtml(action);
-        block.replaceWith(wrapper.firstChild);
+        });
         if (data.tiltak) {
           scopeTiltak = data.tiltak;
           renderTiltakSection(data.tiltak);
@@ -1702,6 +1707,8 @@
                   ? '<button type="button" class="btn btn-outline-secondary btn-sm risiko-action-unlink">Koble fra</button>'
                   : '<button type="button" class="btn btn-outline-danger btn-sm risiko-action-delete">Slett</button>';
               }
+              // 2026-11-25: Enable unntak UI once tiltak has an id (was stuck on "Lagre tiltaket…").
+              replaceActionUnntakBlock(card, data.action);
             }
           }
           captureActionSnapshot(card);

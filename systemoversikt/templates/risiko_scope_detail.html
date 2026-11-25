@@ -994,7 +994,7 @@ a.risiko-risk-id-tag:hover { color: inherit; text-decoration: underline; }
 {% if can_edit_scope or can_change_locked_status %}
 {# 2026-10-12: Cache-bust risiko_api.js after session-expiry false-positive fix. #}
 <script src="{% static 'risiko_api.js' %}?v=20261012-session-error" nonce="{{request.csp_nonce}}"></script>
-{# 2026-11-25: Cache-bust risiko_edit.js for sammenstilling unlink in scenario modal. #}
-<script src="{% static 'risiko_edit.js' %}?v=20261125-sammenstilling-unlink" nonce="{{request.csp_nonce}}"></script>
+{# 2026-11-25: Cache-bust risiko_edit.js – unntak after tiltak create; Legg til left of unntak. #}
+<script src="{% static 'risiko_edit.js' %}?v=20261125-unntak-after-create" nonce="{{request.csp_nonce}}"></script>
 {% endif %}
 {% endblock ekstrajavascript %}
