@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-25: can_open_scenario_modal – read-only scenario modal when godkjent/locked (viewers + members).
 # 2026-08-23: Access denied auto-starts OIDC for anonymous users before showing risk 403 page.
 # 2026-08-23: Session ping JSON endpoint + RiskApiUnauthorized for unauthenticated AJAX.
 # 2026-08-13: Scope list search hint – also covers scenario and tiltak fields.
@@ -794,6 +795,7 @@ def risiko_scope_detail(request, pk):
 	if not _has_scope_read_access(request, scope):
 		return _deny_scope_access(request, scope=scope)
 	# 2026-07-01: Godkjent status locks content; read-group viewers never get write access.
+	# 2026-11-25: can_open_scenario_modal lets viewers open scenario UI read-only when locked.
 	scope_is_locked = scope.is_content_locked()
 	is_owner = _is_scope_owner(request, scope)
 	is_member = _is_scope_member(request, scope)
@@ -802,6 +804,7 @@ def risiko_scope_detail(request, pk):
 	can_manage_scope = is_owner and not scope_is_locked
 	can_change_locked_status = is_owner and scope_is_locked and scope.archived_at is None
 	is_read_only_viewer = not is_member and _has_scope_read_access(request, scope)
+	can_open_scenario_modal = True
 	criteria = get_active_criteria()
 
 	scenarios = list(scope.scenarios.prefetch_related('systemer', 'actions').order_by('rekkefolge', 'risk_id'))
@@ -830,8 +833,10 @@ def risiko_scope_detail(request, pk):
 		'scenarios': scenarios,
 		'tiltak_rows': _build_tiltak_rows(scope, scenarios),
 		'can_edit_scope': can_edit_scope,
+		'can_open_scenario_modal': can_open_scenario_modal,
 		'can_manage_scope': can_manage_scope,
 		'can_change_locked_status': can_change_locked_status,
+		'scope_is_locked': scope_is_locked,
 		'is_read_only_viewer': is_read_only_viewer,
 		'owner_memberships': owner_memberships,
 		'participant_memberships': participant_memberships,

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-25: _reject_if_content_locked – distinct 403 for arkivert vs godkjent.
 # 2026-11-25: sammenstilling_mappings include link_pk/can_unlink/unlink_url for modal unlink (owner-group + scope read).
 # 2026-10-12: _auto_risk_id uses next free R# (not count+1) – avoid unique_together collision after deletes.
 # 2026-09-30: Scenario detail includes sammenstilling_mappings (visible sammenstillinger only) for modal display.
@@ -823,12 +824,18 @@ def _require_owner_json(request, scope_id):
 
 
 def _reject_if_content_locked(scope):
-	if scope.is_content_locked():
+	# 2026-11-25: Distinct messages for archive vs godkjent so clients can explain the lock reason.
+	if not scope.is_content_locked():
+		return None
+	if scope.archived_at is not None:
 		return _json_error(
-			'Risikosamlingen er godkjent og kan ikke redigeres. En eier må endre status for å åpne for redigering.',
+			'Risikosamlingen er arkivert og kan ikke redigeres.',
 			status=403,
 		)
-	return None
+	return _json_error(
+		'Risikosamlingen er godkjent og kan ikke redigeres. En eier må endre status for å åpne for redigering.',
+		status=403,
+	)
 
 
 def _reload_scenario(scenario_id):
@@ -1052,12 +1059,11 @@ def api_risiko_scope_update(request, pk):
 	beskrivelse = (data.get('beskrivelse') or '').strip()
 
 	# 2026-07-01: Godkjent – only owners may change status; other fields must stay unchanged.
+	# 2026-11-25: Non-owner locked reject uses _reject_if_content_locked (arkivert vs godkjent).
 	if scope.is_content_locked():
 		if not _is_scope_owner(request, scope):
-			return _json_error(
-				'Risikosamlingen er godkjent og kan ikke redigeres. En eier må endre status for å åpne for redigering.',
-				status=403,
-			)
+			err = _reject_if_content_locked(scope)
+			return err
 		if title != scope.title or beskrivelse != scope.beskrivelse:
 			return _json_error('Godkjente samlinger kan kun ha status endret.', status=403)
 

@@ -1,3 +1,4 @@
+{# 2026-11-25: Read-only scenario modal when godkjent/locked – open for view, writes still gated. #}
 {# 2026-11-25: Scenario modal – KIT + systems under Uønsket hendelse; begrunnelse before type. #}
 {# 2026-11-25: Scenario modal – unlink Risikosammenstilling mapping (×) when user can map. #}
 {# 2026-11-23: Scenario table – allow more text in truncated Uønsket hendelse (80 → 160). #}
@@ -38,7 +39,7 @@
 
 {% block hovedinnhold %}
 
-<div id="risiko-scope-editor" data-can-edit="{% if can_edit_scope %}true{% else %}false{% endif %}" data-can-manage="{% if can_manage_scope %}true{% else %}false{% endif %}" data-can-change-status="{% if can_change_locked_status %}true{% else %}false{% endif %}">
+<div id="risiko-scope-editor" data-can-edit="{% if can_edit_scope %}true{% else %}false{% endif %}" data-can-open-modal="{% if can_open_scenario_modal %}true{% else %}false{% endif %}" data-content-locked="{% if scope_is_locked %}true{% else %}false{% endif %}" data-can-manage="{% if can_manage_scope %}true{% else %}false{% endif %}" data-can-change-status="{% if can_change_locked_status %}true{% else %}false{% endif %}">
 
 <p>
 	<a class="btn btn-back btn-sm" href="{% url 'risiko_scope_list' %}">&larr; Tilbake til oversikt</a>
@@ -48,7 +49,9 @@
 
 {% if is_read_only_viewer %}
 <div class="alert alert-secondary py-2" role="status">Du har lesetilgang til denne samlingen via tilgangsgruppe for virksomheten. Redigering krever at du er eier eller deltaker.</div>
-{% elif scope.is_content_locked and not can_change_locked_status %}
+{% elif scope.archived_at %}
+<div class="alert alert-info py-2" role="status">Denne samlingen er arkivert og skrivebeskyttet.</div>
+{% elif scope_is_locked and not can_change_locked_status %}
 <div class="alert alert-info py-2" role="status">Denne samlingen er godkjent og skrivebeskyttet.</div>
 {% endif %}
 
@@ -280,7 +283,7 @@
 </thead>
 <tbody id="risiko-scenarios-tbody">
 {% for scenario in scenarios %}
-<tr class="{% if can_edit_scope %}risiko-scenario-row{% endif %}" data-scenario-id="{{ scenario.pk }}" {% if can_edit_scope %}style="cursor:pointer"{% endif %}>
+<tr class="{% if can_open_scenario_modal %}risiko-scenario-row{% endif %}" data-scenario-id="{{ scenario.pk }}" {% if can_open_scenario_modal %}style="cursor:pointer"{% endif %}>
 	<td>{{ scenario.display_risk_id }}</td>
 	<td>{{ scenario.uonsket_hendelse|truncatechars:160 }}</td>
 	<td class="risiko-systemer-cell">
@@ -307,7 +310,7 @@
 
 </div>
 
-{% if can_edit_scope %}
+{% if can_open_scenario_modal %}
 <div class="modal fade" id="risiko-scenario-modal" tabindex="-1" role="dialog" aria-labelledby="risiko-scenario-modal-title" aria-hidden="true">
 	<div class="modal-dialog modal-xl risiko-scenario-modal-dialog" role="document">
 		<div class="modal-content">
@@ -319,6 +322,20 @@
 				<button type="button" class="close" data-dismiss="modal" aria-label="Lukk"><span aria-hidden="true">&times;</span></button>
 			</div>
 			<div class="modal-body">
+				{% if not can_edit_scope %}
+				{# 2026-11-25: Persistent read-only notice when collection is locked or viewer lacks write access. #}
+				<div class="alert alert-info py-2" role="status" id="risiko-modal-readonly-alert">
+					{% if scope.archived_at %}
+					Risikosamlingen er arkivert og kan ikke redigeres.
+					{% elif scope_is_locked %}
+					Risikosamlingen er godkjent og skrivebeskyttet. En eier må endre status for å åpne for redigering.
+					{% elif is_read_only_viewer %}
+					Du har lesetilgang til denne samlingen. Redigering krever at du er eier eller deltaker.
+					{% else %}
+					Denne samlingen er skrivebeskyttet.
+					{% endif %}
+				</div>
+				{% endif %}
 				<input type="hidden" id="risiko-modal-scenario-id" value="">
 
 				<div class="risiko-modal-layout">
@@ -475,7 +492,12 @@
 {
 	"scopeId": {{ scope.pk }},
 	"scopeStatus": "{{ scope.status }}",
+	"scopeArchived": {% if scope.archived_at %}true{% else %}false{% endif %},
+	"contentLocked": {% if scope_is_locked %}true{% else %}false{% endif %},
+	"canEditScope": {% if can_edit_scope %}true{% else %}false{% endif %},
 	"canManageScope": {% if can_manage_scope %}true{% else %}false{% endif %},
+	"isReadOnlyViewer": {% if is_read_only_viewer %}true{% else %}false{% endif %},
+	"readOnlyMessage": "{% filter escapejs %}{% if scope.archived_at %}Risikosamlingen er arkivert og kan ikke redigeres.{% elif scope_is_locked %}Risikosamlingen er godkjent og skrivebeskyttet. En eier må endre status for å åpne for redigering.{% elif is_read_only_viewer %}Du har lesetilgang til denne samlingen. Redigering krever at du er eier eller deltaker.{% else %}Denne samlingen er skrivebeskyttet.{% endif %}{% endfilter %}",
 	"staticPrefix": "{% get_static_prefix %}",
 	"editScenarioId": {% if edit_scenario_id %}{{ edit_scenario_id }}{% else %}null{% endif %},
 	"csrf": "{{ csrf_token }}"
@@ -991,10 +1013,10 @@ a.risiko-risk-id-tag:hover { color: inherit; text-decoration: underline; }
 .risiko-omfang-figur-link { cursor: zoom-in; }
 .risiko-omfang-figur-preview { width: 100%; height: auto; }
 </style>
-{% if can_edit_scope or can_change_locked_status %}
+{% if can_open_scenario_modal or can_change_locked_status %}
 {# 2026-10-12: Cache-bust risiko_api.js after session-expiry false-positive fix. #}
 <script src="{% static 'risiko_api.js' %}?v=20261012-session-error" nonce="{{request.csp_nonce}}"></script>
-{# 2026-11-25: Cache-bust risiko_edit.js – unntak after tiltak create; Legg til left of unntak. #}
-<script src="{% static 'risiko_edit.js' %}?v=20261125-unntak-after-create" nonce="{{request.csp_nonce}}"></script>
+{# 2026-11-25: Cache-bust risiko_edit.js – read-only scenario modal when godkjent/locked. #}
+<script src="{% static 'risiko_edit.js' %}?v=20261125-readonly-modal" nonce="{{request.csp_nonce}}"></script>
 {% endif %}
 {% endblock ekstrajavascript %}

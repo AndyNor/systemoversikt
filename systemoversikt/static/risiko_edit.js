@@ -1,4 +1,5 @@
 // Change log:
+// 2026-11-25: Read-only scenario modal when godkjent/locked – open for view; writes still API-gated.
 // 2026-11-25: After tiltak create, swap unntak placeholder for real UI; Legg til next to Unntak label.
 // 2026-11-25: Scenario modal – unlink Risikosammenstilling mapping when API sets can_unlink (same gates as link_delete).
 // 2026-11-23: Scenario table rebuild – truncate uonsket_hendelse at 160 chars (was 80).
@@ -475,7 +476,8 @@
 
   function initRisikoEditor() {
     const root = document.getElementById('risiko-scope-editor');
-    if (!root || root.getAttribute('data-can-edit') !== 'true') {
+    // 2026-11-25: Init for view-only modal when collection is locked or user cannot edit.
+    if (!root || root.getAttribute('data-can-open-modal') !== 'true') {
       return;
     }
 
@@ -483,6 +485,8 @@
     if (!config) {
       return;
     }
+
+    const canEdit = root.getAttribute('data-can-edit') === 'true';
 
     let meta = null;
     let draftSystems = [];
@@ -529,7 +533,49 @@
     function isContentLockedError(err) {
       if (!err) return false;
       const msg = err.message || '';
-      return msg.indexOf('godkjent') !== -1 && msg.indexOf('kan ikke redigeres') !== -1;
+      if (msg.indexOf('kan ikke redigeres') === -1) {
+        return false;
+      }
+      // 2026-11-25: Match both godkjent and arkivert lock messages from the API.
+      return msg.indexOf('godkjent') !== -1 || msg.indexOf('arkivert') !== -1;
+    }
+
+    function applyIntentionalReadOnly() {
+      // 2026-11-25: Persistent alert in modal body is the main notice; lock inputs without header error spam.
+      modalContentLocked = true;
+      modalAutosavePaused = true;
+      clearTimeout(scenarioAutosaveTimer);
+      scenarioAutosaveTimer = null;
+      setModalInputsReadOnly(true);
+      setModalStatus('');
+      const titleEl = document.getElementById('risiko-scenario-modal-title');
+      if (titleEl) {
+        titleEl.textContent = titleEl.textContent.replace(/^Rediger\s+/, 'Vis ');
+      }
+      const delBtn = document.getElementById('risiko-delete-scenario');
+      if (delBtn) {
+        delBtn.style.display = 'none';
+      }
+      const toolbar = document.querySelector('#risiko-scenario-modal .risiko-action-toolbar');
+      if (toolbar) {
+        toolbar.style.display = 'none';
+      }
+      const linkPicker = document.getElementById('risiko-link-action-picker');
+      if (linkPicker) {
+        linkPicker.style.display = 'none';
+      }
+      const systemSokEl = document.getElementById('risiko-system-sok');
+      if (systemSokEl) {
+        systemSokEl.style.display = 'none';
+      }
+      const systemTreff = document.getElementById('risiko-system-sok-treff');
+      if (systemTreff) {
+        systemTreff.innerHTML = '';
+      }
+      const needSave = document.getElementById('risiko-modal-tiltak-need-save');
+      if (needSave) {
+        needSave.classList.add('d-none');
+      }
     }
 
     function setModalInputsReadOnly(locked) {
@@ -604,6 +650,10 @@
     modal.on('hide.bs.modal', function (e) {
       if (modalCloseAllowed) {
         modalCloseAllowed = false;
+        return;
+      }
+      // 2026-11-25: View-only modal – close without autosave flush or discard prompt.
+      if (!canEdit) {
         return;
       }
       e.preventDefault();
@@ -1073,6 +1123,18 @@
         .then(function (data) {
           setModalStatus('');
           fillScenarioForm(data.scenario);
+          if (!canEdit) {
+            applyIntentionalReadOnly();
+          } else {
+            const toolbar = document.querySelector('#risiko-scenario-modal .risiko-action-toolbar');
+            if (toolbar) {
+              toolbar.style.display = '';
+            }
+            const systemSok = document.getElementById('risiko-system-sok');
+            if (systemSok) {
+              systemSok.style.display = '';
+            }
+          }
           modal.modal('show');
         })
         .catch(function (err) {
@@ -2225,15 +2287,17 @@
         });
     }
 
-    document.querySelectorAll('.risiko-level-select').forEach(function (el) {
-      el.addEventListener('change', function () {
-        updateRiskBadges();
-        scheduleScenarioAutosave();
+    if (canEdit) {
+      document.querySelectorAll('.risiko-level-select').forEach(function (el) {
+        el.addEventListener('change', function () {
+          updateRiskBadges();
+          scheduleScenarioAutosave();
+        });
       });
-    });
+    }
 
     const kitToggles = document.getElementById('risiko-kit-toggles');
-    if (kitToggles) {
+    if (kitToggles && canEdit) {
       kitToggles.addEventListener('click', function (e) {
         const btn = e.target.closest('.risiko-kit-toggle');
         if (!btn) return;
@@ -2245,7 +2309,7 @@
     }
 
     const modalEl = document.getElementById('risiko-scenario-modal');
-    if (modalEl) {
+    if (modalEl && canEdit) {
       modalEl.addEventListener('input', function (e) {
         if (e.target.closest('.risiko-action-card')) return;
         if (e.target.id === 'risiko-system-sok') return;
@@ -2258,31 +2322,38 @@
       });
     }
 
-    document.getElementById('risiko-new-scenario').addEventListener('click', openModalForCreate);
-    document.getElementById('risiko-delete-scenario').addEventListener('click', deleteScenario);
+    const newScenarioBtn = document.getElementById('risiko-new-scenario');
+    if (newScenarioBtn && canEdit) {
+      newScenarioBtn.addEventListener('click', openModalForCreate);
+    }
+    const deleteScenarioBtn = document.getElementById('risiko-delete-scenario');
+    if (deleteScenarioBtn && canEdit) {
+      deleteScenarioBtn.addEventListener('click', deleteScenario);
+    }
 
     const addActionBtn = document.getElementById('risiko-add-action');
-    if (addActionBtn) {
+    if (addActionBtn && canEdit) {
       addActionBtn.addEventListener('click', addModalActionCard);
     }
 
     const linkActionBtn = document.getElementById('risiko-link-action');
-    if (linkActionBtn) {
+    if (linkActionBtn && canEdit) {
       linkActionBtn.addEventListener('click', showLinkActionPicker);
     }
 
     const linkActionConfirm = document.getElementById('risiko-link-action-confirm');
-    if (linkActionConfirm) {
+    if (linkActionConfirm && canEdit) {
       linkActionConfirm.addEventListener('click', linkExistingAction);
     }
 
     const linkActionCancel = document.getElementById('risiko-link-action-cancel');
-    if (linkActionCancel) {
+    if (linkActionCancel && canEdit) {
       linkActionCancel.addEventListener('click', hideLinkActionPicker);
     }
 
     const actionsList = document.getElementById('risiko-actions-list');
-    if (actionsList) {
+    // 2026-11-25: Skip action mutation handlers when modal is view-only (godkjent / no write access).
+    if (actionsList && canEdit) {
       actionsList.addEventListener('input', function (e) {
         const card = e.target.closest('.risiko-action-card');
         if (!card) return;
@@ -2452,19 +2523,22 @@
       });
     }
 
-    document.getElementById('risiko-system-chips').addEventListener('click', function (e) {
-      if (e.target.classList.contains('risiko-system-fjern')) {
-        const chip = e.target.closest('[data-id]');
-        const id = parseInt(chip.getAttribute('data-id'), 10);
-        draftSystems = draftSystems.filter(function (s) { return s.id !== id; });
-        renderSystemChips();
-        scheduleScenarioAutosave();
-      }
-    });
+    const systemChips = document.getElementById('risiko-system-chips');
+    if (systemChips && canEdit) {
+      systemChips.addEventListener('click', function (e) {
+        if (e.target.classList.contains('risiko-system-fjern')) {
+          const chip = e.target.closest('[data-id]');
+          const id = parseInt(chip.getAttribute('data-id'), 10);
+          draftSystems = draftSystems.filter(function (s) { return s.id !== id; });
+          renderSystemChips();
+          scheduleScenarioAutosave();
+        }
+      });
+    }
 
     // 2026-11-25: Unlink category mapping from scenario modal (POST existing link_delete API).
     const sammenstillingMappingsList = document.getElementById('risiko-sammenstilling-mappings-list');
-    if (sammenstillingMappingsList) {
+    if (sammenstillingMappingsList && canEdit) {
       sammenstillingMappingsList.addEventListener('click', function (e) {
         const unlinkBtn = e.target.closest('.risiko-sammenstilling-unlink');
         if (!unlinkBtn || !sammenstillingMappingsList.contains(unlinkBtn)) return;
@@ -2474,36 +2548,39 @@
       });
     }
 
-    document.getElementById('risiko-system-sok').addEventListener('input', function (e) {
-      const q = e.target.value.trim();
-      clearTimeout(searchTimer);
-      const treff = document.getElementById('risiko-system-sok-treff');
-      if (q.length < 2) {
-        treff.innerHTML = '';
-        return;
-      }
-      searchTimer = setTimeout(function () {
-        fetchJson(config.urls.systemSearch + '?q=' + encodeURIComponent(q))
-          .then(function (data) {
-            treff.innerHTML = '';
-            (data.results || []).forEach(function (sys) {
-              if (draftSystems.some(function (s) { return s.id === sys.id; })) return;
-              const btn = document.createElement('button');
-              btn.type = 'button';
-              btn.className = 'btn btn-link btn-sm d-block text-left p-0';
-              btn.textContent = systemSelectLabel(sys);
-              btn.addEventListener('click', function () {
-                draftSystems.push(sys);
-                renderSystemChips();
-                document.getElementById('risiko-system-sok').value = '';
-                treff.innerHTML = '';
-                scheduleScenarioAutosave();
+    const systemSok = document.getElementById('risiko-system-sok');
+    if (systemSok && canEdit) {
+      systemSok.addEventListener('input', function (e) {
+        const q = e.target.value.trim();
+        clearTimeout(searchTimer);
+        const treff = document.getElementById('risiko-system-sok-treff');
+        if (q.length < 2) {
+          treff.innerHTML = '';
+          return;
+        }
+        searchTimer = setTimeout(function () {
+          fetchJson(config.urls.systemSearch + '?q=' + encodeURIComponent(q))
+            .then(function (data) {
+              treff.innerHTML = '';
+              (data.results || []).forEach(function (sys) {
+                if (draftSystems.some(function (s) { return s.id === sys.id; })) return;
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn btn-link btn-sm d-block text-left p-0';
+                btn.textContent = systemSelectLabel(sys);
+                btn.addEventListener('click', function () {
+                  draftSystems.push(sys);
+                  renderSystemChips();
+                  document.getElementById('risiko-system-sok').value = '';
+                  treff.innerHTML = '';
+                  scheduleScenarioAutosave();
+                });
+                treff.appendChild(btn);
               });
-              treff.appendChild(btn);
             });
-          });
-      }, 250);
-    });
+        }, 250);
+      });
+    }
 
     const scopeEditBtn = document.getElementById('risiko-scope-edit');
     if (scopeEditBtn) {
@@ -2536,7 +2613,9 @@
       initTilgangManagement();
     }
 
-    initOmfangManagement();
+    if (canEdit) {
+      initOmfangManagement();
+    }
 
     fetchJson(config.urls.meta).then(function (data) {
       meta = data.meta;
