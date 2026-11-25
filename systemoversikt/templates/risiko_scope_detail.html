@@ -1,3 +1,4 @@
+{# 2026-11-25: Scenario modal – KIT + systems under Uønsket hendelse; begrunnelse before type. #}
 {# 2026-11-25: Scenario modal – unlink Risikosammenstilling mapping (×) when user can map. #}
 {# 2026-11-23: Scenario table – allow more text in truncated Uønsket hendelse (80 → 160). #}
 {# 2026-10-12: Cache-bust risiko_api.js – stop mislabeling HTML 500 as session expiry. #}
@@ -22,7 +23,7 @@
 {% extends "sikkerhet_index.html" %}
 {# 2026-06-30: Modal footer – Slett scenario left, Lukk right. #}
 {# 2026-06-30: Scope status workflow; sannsynlighetstype tags – table column and modal checkboxes. #}
-{# 2026-06-30: Modal mid column order – konsekvens/sannsynlighet, konsekvenstype grid, begrunnelser, risikobehandling. #}
+{# 2026-06-30: Modal mid column – konsekvens/sannsynlighet, begrunnelse before type, risikobehandling. #}
 {# 2026-06-30: Konsekvenstype tags on scenarios – table column and modal checkboxes. #}
 {# 2026-06-30: Tiltak status badge CSS – forslag (gray) and besluttet (pink). #}
 {# 2026-06-30: Tilgang left of beskrivelse; risikomatriser on dedicated row below. #}
@@ -328,22 +329,9 @@
 							<label for="risiko-f-uonsket">Uønsket hendelse</label>
 							<textarea class="form-control form-control-sm risiko-modal-stretch-textarea" id="risiko-f-uonsket" rows="3"></textarea>
 						</div>
-						<div id="risiko-sammenstilling-mappings" class="risiko-sammenstilling-mappings" style="display:none;">
-							<span class="risiko-sammenstilling-mappings-label">Risikosammenstilling</span>
-							<div id="risiko-sammenstilling-mappings-list"></div>
-						</div>
-						<div class="form-group risiko-modal-textarea-field">
-							<label for="risiko-f-arsaker">Årsaker/svakheter</label>
-							<textarea class="form-control form-control-sm risiko-modal-stretch-textarea" id="risiko-f-arsaker" rows="3"></textarea>
-						</div>
+						{# 2026-11-25: KIT + systems right under Uønsket hendelse, before Risikosammenstilling. #}
 						<div class="risiko-modal-col-footer">
-						<h6>Tilknyttede systemer</h6>
-						<div id="risiko-system-chips" class="mb-1"></div>
-						<div class="form-group">
-							<input type="text" class="form-control form-control-sm" id="risiko-system-sok" placeholder="Søk systemnavn (min. 2 tegn)">
-						</div>
-						<div id="risiko-system-sok-treff" class="mb-2"></div>
-						<div class="form-group mb-0">
+						<div class="form-group mb-2">
 							{# 2026-07-01: K/I/T toggle buttons – still stored as kit_dimensjoner string. #}
 							<label class="d-block mb-1">Konfidensialitet (K), Integritet (I), Tilgjengelighet (T)</label>
 							<div id="risiko-kit-toggles" class="risiko-kit-toggle-group" role="group" aria-label="KIT dimensjoner">
@@ -352,6 +340,20 @@
 								<button type="button" class="btn btn-sm risiko-kit-toggle risiko-kit-t" data-kit="T" aria-pressed="false" title="Tilgjengelighet">T</button>
 							</div>
 						</div>
+						<h6>Tilknyttede systemer</h6>
+						<div id="risiko-system-chips" class="mb-1"></div>
+						<div class="form-group">
+							<input type="text" class="form-control form-control-sm" id="risiko-system-sok" placeholder="Søk systemnavn (min. 2 tegn)">
+						</div>
+						<div id="risiko-system-sok-treff" class="mb-2"></div>
+						</div>
+						<div id="risiko-sammenstilling-mappings" class="risiko-sammenstilling-mappings" style="display:none;">
+							<span class="risiko-sammenstilling-mappings-label">Risikosammenstilling</span>
+							<div id="risiko-sammenstilling-mappings-list"></div>
+						</div>
+						<div class="form-group risiko-modal-textarea-field">
+							<label for="risiko-f-arsaker">Årsaker/svakheter</label>
+							<textarea class="form-control form-control-sm risiko-modal-stretch-textarea" id="risiko-f-arsaker" rows="3"></textarea>
 						</div>
 					</div>
 
@@ -370,21 +372,22 @@
 							</div>
 							<p class="risiko-modal-risk-line mb-2">Risiko: <span id="risiko-badge-current" class="badge badge-secondary">–</span></p>
 						</div>
-						<div class="form-group risiko-konsekvenstype-block mb-2">
-							<label class="d-block mb-1">Konsekvenstype</label>
-							<div id="risiko-konsekvenstype-checks" class="risiko-konsekvenstype-checks"></div>
-						</div>
-						<div class="form-group risiko-sannsynlighetstype-block mb-2">
-							<label class="d-block mb-1">Sannsynlighetstype</label>
-							<div id="risiko-sannsynlighetstype-checks" class="risiko-sannsynlighetstype-checks"></div>
-						</div>
+						{# 2026-11-25: Begrunnelse before type for konsekvens and sannsynlighet. #}
 						<div class="form-group risiko-modal-textarea-field">
 							<label for="risiko-f-konsekvens-begrunnelse">Konsekvensbegrunnelse</label>
 							<textarea class="form-control form-control-sm risiko-modal-stretch-textarea" id="risiko-f-konsekvens-begrunnelse" rows="3"></textarea>
 						</div>
+						<div class="form-group risiko-konsekvenstype-block mb-2">
+							<label class="d-block mb-1">Konsekvenstype</label>
+							<div id="risiko-konsekvenstype-checks" class="risiko-konsekvenstype-checks"></div>
+						</div>
 						<div class="form-group risiko-modal-textarea-field">
 							<label for="risiko-f-sannsynlighet-begrunnelse">Sannsynlighetsbegrunnelse</label>
 							<textarea class="form-control form-control-sm risiko-modal-stretch-textarea" id="risiko-f-sannsynlighet-begrunnelse" rows="3"></textarea>
+						</div>
+						<div class="form-group risiko-sannsynlighetstype-block mb-2">
+							<label class="d-block mb-1">Sannsynlighetstype</label>
+							<div id="risiko-sannsynlighetstype-checks" class="risiko-sannsynlighetstype-checks"></div>
 						</div>
 						<div class="form-group mb-0 risiko-modal-risk-bottom">
 							<label for="risiko-f-risikobehandling">Risikobehandling</label>
