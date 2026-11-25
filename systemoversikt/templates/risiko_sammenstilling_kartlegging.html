@@ -1,5 +1,7 @@
 {% extends "sikkerhet_index.html" %}
 {% load static %}
+{# 2026-11-25: Mapping filter as mutually exclusive radios (all / this / nowhere). #}
+{# 2026-11-25: Added filter for scenarios not mapped in any sammenstilling (unmapped_anywhere). #}
 {# 2026-10-01: Removed Søk button – scenario search runs automatically on input and checkbox change. #}
 {# 2026-10-01: Filter field for underkategori dropdown – narrows options by title and forklaring. #}
 {# 2026-08-23: Load risiko_api.js before rammeverk JS for shared session handling. #}
@@ -54,9 +56,11 @@
 					<label class="small mb-0">Søk</label>
 					<input type="search" class="form-control form-control-sm" id="kartlegging-q" placeholder="Hendelse, samling, tiltak…">
 				</div>
-				<div class="col-md-3">
-					<label class="small mb-0 d-block">&nbsp;</label>
-					<label class="mb-0 small"><input type="checkbox" id="kartlegging-unmapped" checked> Kun ukartlagte i denne sammenstillingen</label>
+				<div class="col-md-5" id="kartlegging-mapping-filter">
+					<label class="small mb-0 d-block">Kartlegging</label>
+					<label class="mb-0 small d-block"><input type="radio" name="kartlegging-mapping" value="this" checked> Kun ukartlagte i denne sammenstillingen</label>
+					<label class="mb-0 small d-block mt-1"><input type="radio" name="kartlegging-mapping" value="nowhere"> Kun ikke kartlagt i noen sammenstilling</label>
+					<label class="mb-0 small d-block mt-1"><input type="radio" name="kartlegging-mapping" value="all"> Vis alle</label>
 				</div>
 				<div class="col-md-4">
 					<label class="small mb-0 d-block">&nbsp;</label>
@@ -108,7 +112,8 @@
 
 {% block script_append %}
 <script src="{% static 'risiko_api.js' %}" nonce="{{ request.csp_nonce }}"></script>
-<script src="{% static 'risiko_rammeverk.js' %}" nonce="{{ request.csp_nonce }}"></script>
+{# 2026-11-25: Cache-bust for mapping-filter radio change. #}
+<script src="{% static 'risiko_rammeverk.js' %}?v=20261125-mapping-radio" nonce="{{ request.csp_nonce }}"></script>
 <script nonce="{{ request.csp_nonce }}">
 document.addEventListener('DOMContentLoaded', function () {
 	if (window.RisikoRammeverk) {

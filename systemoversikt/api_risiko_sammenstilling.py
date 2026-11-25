@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-25: Kartlegging scenario search – unmapped_anywhere filter (no links to any sammenstilling).
 # 2026-11-25: Log scenario link/unlink to RiskActivityLog (sammenstilling + scope) for activity pages.
 # 2026-10-01: Hovedkategori level is computed automatically – manual assessment save/apply APIs removed.
 # 2026-10-01: Active nodes API – include forklaring so kartlegging dropdown can be searched by description.
@@ -338,6 +339,8 @@ def api_risiko_sammenstilling_scenarios(request, pk):
 	virksomhet_id = request.GET.get('virksomhet_id')
 	scope_id = request.GET.get('scope_id')
 	unmapped_only = request.GET.get('unmapped_only') == '1'
+	# 2026-11-25: Filter scenarios with no mapping in any sammenstilling.
+	unmapped_anywhere = request.GET.get('unmapped_anywhere') == '1'
 	eskaleres_only = request.GET.get('eskaleres_only') == '1'
 	q = (request.GET.get('q') or '').strip()
 	qs = search_scenarios_for_mapping(
@@ -346,6 +349,7 @@ def api_risiko_sammenstilling_scenarios(request, pk):
 		virksomhet_id=int(virksomhet_id) if virksomhet_id else None,
 		scope_id=int(scope_id) if scope_id else None,
 		unmapped_only=unmapped_only,
+		unmapped_anywhere=unmapped_anywhere,
 		eskaleres_only=eskaleres_only,
 		q=q,
 	)[:200]

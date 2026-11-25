@@ -1,4 +1,6 @@
 // Change log:
+// 2026-11-25: Kartlegging mapping filter – mutually exclusive radios (all / this / nowhere).
+// 2026-11-25: Kartlegging filter – unmapped_anywhere (scenarios not linked to any sammenstilling).
 // 2026-10-01: Hovedkategori level is computed server-side – manual rating modal (set/apply level) removed.
 // 2026-10-01: Mal editor – delete subcategory; server returns 409 with link counts and user must confirm again.
 // 2026-10-01: Kartlegging scenario search runs on input (debounced) and checkbox change; stale responses ignored.
@@ -226,7 +228,11 @@
       var q = document.getElementById('kartlegging-q').value;
       if (virksomhetEl && virksomhetEl.value) params.set('virksomhet_id', virksomhetEl.value);
       if (q) params.set('q', q);
-      if (document.getElementById('kartlegging-unmapped').checked) params.set('unmapped_only', '1');
+      // 2026-11-25: Mapping filter radios – only one mode at a time.
+      var mappingFilter = document.querySelector('input[name="kartlegging-mapping"]:checked');
+      var mappingMode = mappingFilter ? mappingFilter.value : 'this';
+      if (mappingMode === 'nowhere') params.set('unmapped_anywhere', '1');
+      else if (mappingMode === 'this') params.set('unmapped_only', '1');
       var eskaleresEl = document.getElementById('kartlegging-eskaleres');
       if (eskaleresEl && eskaleresEl.checked) params.set('eskaleres_only', '1');
       tbody.innerHTML = '<tr><td colspan="' + colCount + '" class="text-muted">Laster…</td></tr>';
@@ -265,7 +271,13 @@
     }
 
     document.getElementById('kartlegging-q').addEventListener('input', scheduleSearch);
-    document.getElementById('kartlegging-unmapped').addEventListener('change', search);
+    var mappingFilterRoot = document.getElementById('kartlegging-mapping-filter');
+    if (mappingFilterRoot) {
+      mappingFilterRoot.addEventListener('change', search);
+    } else {
+      var legacyUnmapped = document.getElementById('kartlegging-unmapped');
+      if (legacyUnmapped) legacyUnmapped.addEventListener('change', search);
+    }
     var eskaleresFilter = document.getElementById('kartlegging-eskaleres');
     if (eskaleresFilter) eskaleresFilter.addEventListener('change', search);
     document.getElementById('kartlegging-link-btn').addEventListener('click', function () {

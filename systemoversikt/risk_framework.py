@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-25: Kartlegging filter unmapped_anywhere – scenarios with no link to any sammenstilling.
 # 2026-10-01: Aggregation uses worst-case floor – many moderate scenarios no longer mask a Høy risk.
 # 2026-10-01: Hovedkategori level is computed (score-weighted S×K) – manual «Sett nivå» removed from rollup/matrix.
 # 2026-09-03: Live sammenstilling/kartlegging omit archived-collection scenarios; stored snapshots keep historical JSON.
@@ -706,8 +707,18 @@ def _scenarios_with_scope_read_access_qs(user):
 	)
 
 
-def search_scenarios_for_mapping(sammenstilling, user, virksomhet_id=None, scope_id=None, unmapped_only=False, eskaleres_only=False, q=''):
+def search_scenarios_for_mapping(
+	sammenstilling,
+	user,
+	virksomhet_id=None,
+	scope_id=None,
+	unmapped_only=False,
+	unmapped_anywhere=False,
+	eskaleres_only=False,
+	q='',
+):
 	# 2026-09-03: Kartlegging search excludes archived risk collections.
+	# 2026-11-25: unmapped_anywhere excludes scenarios linked to any sammenstilling.
 	qs = _scenarios_with_scope_read_access_qs(user).filter(
 		scope__archived_at__isnull=True,
 	).select_related(
@@ -722,7 +733,13 @@ def search_scenarios_for_mapping(sammenstilling, user, virksomhet_id=None, scope
 		qs = qs.filter(scope__virksomhet_id=virksomhet_id)
 	if scope_id:
 		qs = qs.filter(scope_id=scope_id)
-	if unmapped_only:
+	if unmapped_anywhere:
+		qs = qs.filter(
+			~Exists(
+				RiskSammenstillingScenarioLink.objects.filter(scenario_id=OuterRef('pk'))
+			),
+		)
+	elif unmapped_only:
 		qs = qs.filter(
 			~Q(sammenstilling_links__sammenstilling=sammenstilling),
 		)
