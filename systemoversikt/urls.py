@@ -180,6 +180,8 @@ urlpatterns = [
 	re_path(r'^sikkerhet/sikkerhetstester/$', views.rapport_sikkerhetstester, name="rapport_sikkerhetstester"),
 	re_path(r'^sikkerhet/risiko/$', views_risiko.risiko_scope_list, name='risiko_scope_list'),
 	re_path(r'^sikkerhet/risiko/api/session/$', views_risiko.api_risiko_session_ping, name='api_risiko_session_ping'),
+	# 2026-11-25: Cross-collection uønskede hendelser sorted by inherent risk level.
+	re_path(r'^sikkerhet/risiko/hendelser/$', views_risiko.risiko_hendelser_oversikt, name='risiko_hendelser_oversikt'),
 	re_path(r'^sikkerhet/risiko/tiltak/$', views_risiko.risiko_tiltak_oversikt, name='risiko_tiltak_oversikt'),
 	# 2026-11-25: Mine tiltak – tiltak assigned to the logged-in user.
 	re_path(r'^sikkerhet/risiko/mine-tiltak/$', views_risiko.risiko_mine_tiltak, name='risiko_mine_tiltak'),

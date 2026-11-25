@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-25: Uønskede hendelser nav search – matches sikkerhet sidemeny under Risikovurderinger.
 # 2026-11-25: Mine tiltak nav search – matches sikkerhet sidemeny after Risikotiltak.
 # 2026-11-11: Godkjente digitale arkiv keywords – drop er_arkiv (legacy System field removed).
 # 2026-11-10: Kartotekets API-er – admin sidemeny; searchable via «api».
@@ -121,6 +122,7 @@ NAV_PAGES = [
 	_entry('Sårbarhetsoppfølging', 'sarbarhetssak_liste', 'Sikkerhet', ['sårbarhetsoppfølging', 'sårbarhetssak', 'sarbarhetssak', 'cve sak', 'tiltakseier'], permissions=['systemoversikt.view_qualysvuln']),
 	_entry('Gjennomførte pentester', 'rapport_sikkerhetstester', 'Sikkerhet', ['pentester', 'pentest', 'sikkerhetstester']),
 	_entry('Risikovurderinger', 'risiko_scope_list', 'Sikkerhet', ['risiko', 'risikovurdering', 'risikomatrise'], permissions=[]),
+	_entry('Uønskede hendelser', 'risiko_hendelser_oversikt', 'Sikkerhet', ['uønskede hendelser', 'uonskede hendelser', 'risikoscenario', 'hendelser oversikt'], permissions=[]),
 	_entry('Risikotiltak', 'risiko_tiltak_oversikt', 'Sikkerhet', ['risiko tiltak', 'risikotiltak', 'tiltaksoversikt'], permissions=[]),
 	_entry('Mine tiltak', 'risiko_mine_tiltak', 'Sikkerhet', ['mine tiltak', 'mine risikotiltak', 'tiltak tildelt meg'], permissions=[]),
 	_entry('Tiltaksunntak', 'risiko_unntak_oversikt', 'Sikkerhet', ['risiko unntak', 'tiltaksunntak', 'unntaksoversikt'], permissions=[]),

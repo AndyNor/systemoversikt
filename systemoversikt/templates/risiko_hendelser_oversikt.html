@@ -1,0 +1,139 @@
+{% extends "sikkerhet_index.html" %}
+{% load templatetags %}
+{# Change log: #}
+{# 2026-11-25: Cross-collection uønskede hendelser – readable scopes, sorted by inherent risk. #}
+
+{% block overskrift %}
+Uønskede hendelser
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p class="mb-3">
+	<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_scope_list' %}">Risikosamlinger</a>
+	<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_tiltak_oversikt' %}">Risikotiltak</a>
+</p>
+
+<form method="get" id="risiko-hendelser-filter-form" class="mb-3 p-3 border rounded bg-light">
+	<div class="form-row align-items-end">
+		<div class="form-group col-md-4 mb-2">
+			<label class="small mb-1" for="risiko-hendelser-q">Søk</label>
+			<input type="search" class="form-control form-control-sm" id="risiko-hendelser-q" name="q"
+				value="{{ search_query }}" placeholder="Hendelse, risk-id, samling…" autocomplete="off">
+		</div>
+		<div class="form-group col-md-2 mb-2">
+			<label class="small mb-1" for="risiko-hendelser-risikonivaa">Risikonivå</label>
+			<select class="form-control form-control-sm" id="risiko-hendelser-risikonivaa" name="risikonivaa">
+				<option value="">Alle</option>
+				{% for label in risikonivaa_choices %}
+				<option value="{{ label }}" {% if filter_risikonivaa == label %}selected{% endif %}>{{ label }}</option>
+				{% endfor %}
+			</select>
+		</div>
+		<div class="form-group col-md-3 mb-2">
+			<label class="small mb-1" for="risiko-hendelser-virksomhet">Virksomhet</label>
+			<select class="form-control form-control-sm" id="risiko-hendelser-virksomhet" name="virksomhet">
+				<option value="">Alle</option>
+				{% for v in virksomheter %}
+				<option value="{{ v.pk }}" {% if filter_virksomhet == v.pk|stringformat:"s" %}selected{% endif %}>
+					{{ v.virksomhetsforkortelse }}
+				</option>
+				{% endfor %}
+			</select>
+		</div>
+		<div class="form-group col-md-3 mb-2">
+			<div class="form-check mt-4">
+				<input class="form-check-input" type="checkbox" name="include_archived" value="1"
+					id="risiko-hendelser-archived" {% if include_archived %}checked{% endif %}>
+				<label class="form-check-label small" for="risiko-hendelser-archived">Inkluder arkiverte samlinger</label>
+			</div>
+		</div>
+	</div>
+	<div class="form-row align-items-end">
+		<div class="form-group col-md-3 mb-2">
+			<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_hendelser_oversikt' %}">Nullstill</a>
+		</div>
+	</div>
+</form>
+
+<p class="text-muted small">{% if page.paginator.count %}Viser {{ page.start_index }}–{{ page.end_index }} av {{ page.paginator.count }} uønskede hendelser du har tilgang til. Sortert på risikonivå (Høy først).{% else %}Ingen uønskede hendelser å vise.{% endif %}</p>
+
+{% if rows %}
+<table class="table table-sm table-bordered">
+<thead>
+<tr>
+	<th>ID</th>
+	<th>Uønsket hendelse</th>
+	<th>Nåværende</th>
+	<th>Etter tiltak</th>
+	<th>Samling</th>
+</tr>
+</thead>
+<tbody>
+{% for row in rows %}
+<tr>
+	<td>
+		<a href="{% url 'risiko_scope_detail' pk=row.scenario.scope_id %}?edit={{ row.scenario.pk }}">{{ row.display_risk_id }}</a>
+	</td>
+	<td>
+		<a href="{% url 'risiko_scope_detail' pk=row.scenario.scope_id %}?edit={{ row.scenario.pk }}">{{ row.scenario.uonsket_hendelse|truncatechars:160|default:"–" }}</a>
+	</td>
+	<td class="{{ row.scenario.risiko_css }}">{{ row.scenario.risiko_etikett|default:"–" }}</td>
+	<td class="{{ row.scenario.restrisiko_css }}">{{ row.scenario.restrisiko_etikett|default:"–" }}</td>
+	<td>
+		<a href="{% url 'risiko_scope_detail' pk=row.scenario.scope_id %}">{{ row.scenario.scope.title }}</a>
+		{% if row.scenario.scope.virksomhet %}<br><span class="text-muted small">{{ row.scenario.scope.virksomhet.virksomhetsforkortelse }}</span>{% endif %}
+	</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{% if page.has_other_pages %}
+<nav aria-label="Sidetall">
+	<ul class="pagination pagination-sm">
+		{% if page.has_previous %}
+		<li class="page-item"><a class="page-link" href="?page={{ page.previous_page_number }}&amp;q={{ search_query|urlencode }}&amp;risikonivaa={{ filter_risikonivaa|urlencode }}&amp;virksomhet={{ filter_virksomhet|urlencode }}{% if include_archived %}&amp;include_archived=1{% endif %}">Forrige</a></li>
+		{% endif %}
+		<li class="page-item disabled"><span class="page-link">Side {{ page.number }} / {{ page.paginator.num_pages }}</span></li>
+		{% if page.has_next %}
+		<li class="page-item"><a class="page-link" href="?page={{ page.next_page_number }}&amp;q={{ search_query|urlencode }}&amp;risikonivaa={{ filter_risikonivaa|urlencode }}&amp;virksomhet={{ filter_virksomhet|urlencode }}{% if include_archived %}&amp;include_archived=1{% endif %}">Neste</a></li>
+		{% endif %}
+	</ul>
+</nav>
+{% endif %}
+
+{% else %}
+<p class="text-muted">Ingen uønskede hendelser matcher filtrene, eller du har ikke tilgang til noen risikosamlinger.</p>
+{% endif %}
+
+{% endblock hovedinnhold %}
+
+{% block script_append %}
+<script type="text/javascript" nonce="{{ request.csp_nonce }}">
+(function () {
+	var form = document.getElementById('risiko-hendelser-filter-form');
+	if (!form) {
+		return;
+	}
+	var applyTimer = null;
+	var APPLY_DEBOUNCE_MS = 450;
+
+	function scheduleApply() {
+		clearTimeout(applyTimer);
+		applyTimer = setTimeout(function () {
+			form.submit();
+		}, APPLY_DEBOUNCE_MS);
+	}
+
+	form.querySelectorAll('select, input[type="checkbox"]').forEach(function (el) {
+		el.addEventListener('change', scheduleApply);
+	});
+
+	var searchInput = document.getElementById('risiko-hendelser-q');
+	if (searchInput) {
+		searchInput.addEventListener('input', scheduleApply);
+	}
+})();
+</script>
+{% endblock script_append %}

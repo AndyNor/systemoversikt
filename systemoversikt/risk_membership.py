@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-25: scenarios_visible_to_user – global uønskede-hendelser list limited to readable scopes.
 # 2026-11-23: annotate_scope_list – Count(scenarios, distinct=True) so search joins do not inflate scenario counts.
 # 2026-08-13: search_scopes – also match scenario and tiltak text so collections are findable by content.
 # 2026-08-13: readable_scope_ids_for_user / actions_visible_to_user / unntak_visible_to_user for global lists.
@@ -29,6 +30,7 @@ from systemoversikt.models import (
 	RISK_SCOPE_MEMBER_ROLE_OWNER,
 	RiskAction,
 	RiskActionUnntak,
+	RiskScenario,
 	RiskScope,
 	RiskScopeMember,
 	RiskVirksomhetGroup,
@@ -234,6 +236,14 @@ def actions_visible_to_user(user, include_archived=False):
 		return RiskAction.objects.none()
 	scope_ids = readable_scope_ids_for_user(user, include_archived=include_archived)
 	return RiskAction.objects.filter(scope_id__in=scope_ids)
+
+
+def scenarios_visible_to_user(user, include_archived=False):
+	"""RiskScenario queryset limited to scopes the user can read."""
+	if not user.is_authenticated:
+		return RiskScenario.objects.none()
+	scope_ids = readable_scope_ids_for_user(user, include_archived=include_archived)
+	return RiskScenario.objects.filter(scope_id__in=scope_ids)
 
 
 def unntak_visible_to_user(user, include_archived=False):

@@ -1,5 +1,6 @@
 {% extends "index.html" %}
 {# Change log: #}
+{# 2026-11-25: Sidemeny Uønskede hendelser under Risikovurderinger. #}
 {# 2026-11-25: Sidemeny Mine tiltak after Risikotiltak. #}
 {# 2026-10-13: Rename sidemeny Tiltak to Risikotiltak. #}
 {# 2026-10-13: Sidemeny Tiltak and Tiltaksunntak between Risikovurderinger and Risikosammenstilling. #}
@@ -28,7 +29,11 @@
 	<a href="{{ url_rapport_kit_vurderinger_samlet }}" class="btn btn-sm btn-link {% if url_rapport_kit_vurderinger_samlet in request.path %}fremhev{% endif %}">KIT-vurderinger samlet</a><br>
 
 	{% url 'risiko_scope_list' as url_risiko_scope_list %}
-	<a href="{{ url_risiko_scope_list }}" class="btn btn-sm btn-link {% if '/sikkerhet/risiko/' in request.path and '/sikkerhet/risiko/rammeverk/' not in request.path and '/sikkerhet/risiko/tiltak/' not in request.path and '/sikkerhet/risiko/mine-tiltak/' not in request.path and '/sikkerhet/risiko/unntak/' not in request.path %}fremhev{% endif %}">Risikovurderinger</a><br>
+	<a href="{{ url_risiko_scope_list }}" class="btn btn-sm btn-link {% if '/sikkerhet/risiko/' in request.path and '/sikkerhet/risiko/rammeverk/' not in request.path and '/sikkerhet/risiko/hendelser/' not in request.path and '/sikkerhet/risiko/tiltak/' not in request.path and '/sikkerhet/risiko/mine-tiltak/' not in request.path and '/sikkerhet/risiko/unntak/' not in request.path %}fremhev{% endif %}">Risikovurderinger</a><br>
+
+	{# 2026-11-25: Uønskede hendelser – cross-collection scenario list under Risikovurderinger. #}
+	{% url 'risiko_hendelser_oversikt' as url_risiko_hendelser_oversikt %}
+	<a href="{{ url_risiko_hendelser_oversikt }}" class="btn btn-sm btn-link {% if '/sikkerhet/risiko/hendelser/' in request.path %}fremhev{% endif %}">Uønskede hendelser</a><br>
 
 	{% url 'risiko_tiltak_oversikt' as url_risiko_tiltak_oversikt %}
 	<a href="{{ url_risiko_tiltak_oversikt }}" class="btn btn-sm btn-link {% if '/sikkerhet/risiko/tiltak/' in request.path %}fremhev{% endif %}">Risikotiltak</a><br>

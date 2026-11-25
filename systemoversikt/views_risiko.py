@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-25: risiko_hendelser_oversikt – cross-collection uønskede hendelser sorted by inherent risk.
 # 2026-11-25: risiko_mine_tiltak – tiltak assigned to logged-in user (ansvarlig email/UPN).
 # 2026-11-25: can_open_scenario_modal – read-only scenario modal when godkjent/locked (viewers + members).
 # 2026-08-23: Access denied auto-starts OIDC for anonymous users before showing risk 403 page.
@@ -123,6 +124,11 @@ from systemoversikt.risk_membership import (
 	user_has_scope_write_access,
 	user_is_scope_member,
 	virksomheter_with_risk_read_access,
+)
+from systemoversikt.risk_scenario_lists import (
+	filter_context_from_params as hendelser_filter_context_from_params,
+	hendelser_overview_queryset,
+	paginate_queryset as hendelser_paginate_queryset,
 )
 from systemoversikt.risk_tiltak_lists import (
 	DEFAULT_TILTAK_STATUS_FILTER,
@@ -399,6 +405,42 @@ def _tiltak_overview_rows(actions):
 			'unntak_count': getattr(action, 'unntak_aktiv_count', action.unntak.filter(aktiv=True).count()),
 		})
 	return rows
+
+
+@login_required
+def risiko_hendelser_oversikt(request):
+	# 2026-11-25: Cross-collection uønskede hendelser limited to scopes the user can read; Høy first.
+	qs = hendelser_overview_queryset(request.user, request.GET)
+	page = hendelser_paginate_queryset(qs, request.GET)
+	filter_ctx = hendelser_filter_context_from_params(request.GET)
+	criteria = get_active_criteria()
+
+	# Display R# requires full scenario order per scope (same as unntak overview / collection detail).
+	scope_ids = {scenario.scope_id for scenario in page.object_list}
+	risk_id_by_scope = {}
+	for scope_id in scope_ids:
+		scope_scenarios = list(
+			RiskScenario.objects.filter(scope_id=scope_id).order_by('rekkefolge', 'risk_id')
+		)
+		risk_id_by_scope[scope_id] = annotate_scenario_display_ids(scope_scenarios)
+
+	rows = []
+	for scenario in page.object_list:
+		annotate_scenario_risk_display(scenario, criteria)
+		rows.append({
+			'scenario': scenario,
+			'display_risk_id': risk_id_by_scope.get(scenario.scope_id, {}).get(
+				scenario.pk, scenario.risk_id or ''
+			),
+		})
+	return render(request, 'risiko_hendelser_oversikt.html', {
+		'request': request,
+		'page': page,
+		'rows': rows,
+		'virksomheter': virksomheter_with_risk_read_access(request.user),
+		'profile_virksomhet': profile_virksomhet(request.user),
+		**filter_ctx,
+	})
 
 
 @login_required
