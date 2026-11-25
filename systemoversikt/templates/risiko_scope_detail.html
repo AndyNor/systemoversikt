@@ -1,3 +1,4 @@
+{# 2026-11-25: Scenario modal – unlink Risikosammenstilling mapping (×) when user can map. #}
 {# 2026-11-23: Scenario table – allow more text in truncated Uønsket hendelse (80 → 160). #}
 {# 2026-10-12: Cache-bust risiko_api.js – stop mislabeling HTML 500 as session expiry. #}
 {# 2026-09-30: Scenario modal – compact read-only Risikosammenstilling mappings between Uønsket hendelse and Årsaker/svakheter. #}
@@ -624,7 +625,7 @@
 .risiko-modal-col-footer { flex-shrink: 0; }
 .risiko-sammenstilling-mappings {
 	flex-shrink: 0;
-	max-height: 5.5rem;
+	max-height: 6.5rem;
 	overflow-y: auto;
 	margin-bottom: 0.45rem;
 	font-size: 0.8rem;
@@ -633,6 +634,13 @@
 .risiko-sammenstilling-mappings-label { font-weight: 500; }
 .risiko-sammenstilling-mapping-row { margin-top: 0.1rem; }
 .risiko-sammenstilling-mapping-row .badge { font-weight: normal; margin-right: 0.2rem; }
+.risiko-sammenstilling-unlink {
+	line-height: 1;
+	vertical-align: baseline;
+	color: #6c757d;
+	text-decoration: none !important;
+}
+.risiko-sammenstilling-unlink:hover { color: #a61d24; }
 .risiko-sammenstilling-mapping-node-archived { text-decoration: line-through; opacity: 0.7; }
 .risiko-modal-risk-top,
 .risiko-konsekvenstype-block,
@@ -983,7 +991,7 @@ a.risiko-risk-id-tag:hover { color: inherit; text-decoration: underline; }
 {% if can_edit_scope or can_change_locked_status %}
 {# 2026-10-12: Cache-bust risiko_api.js after session-expiry false-positive fix. #}
 <script src="{% static 'risiko_api.js' %}?v=20261012-session-error" nonce="{{request.csp_nonce}}"></script>
-{# 2026-09-30: Cache-bust risiko_edit.js for sammenstilling mappings in scenario modal. #}
-<script src="{% static 'risiko_edit.js' %}?v=20260930-sammenstilling-mappings" nonce="{{request.csp_nonce}}"></script>
+{# 2026-11-25: Cache-bust risiko_edit.js for sammenstilling unlink in scenario modal. #}
+<script src="{% static 'risiko_edit.js' %}?v=20261125-sammenstilling-unlink" nonce="{{request.csp_nonce}}"></script>
 {% endif %}
 {% endblock ekstrajavascript %}

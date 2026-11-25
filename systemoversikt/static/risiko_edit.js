@@ -1,4 +1,5 @@
 // Change log:
+// 2026-11-25: Scenario modal – unlink Risikosammenstilling mapping when API sets can_unlink (same gates as link_delete).
 // 2026-11-23: Scenario table rebuild – truncate uonsket_hendelse at 160 chars (was 80).
 // 2026-09-30: Scenario modal shows compact read-only Risikosammenstilling mappings (reverse kartlegging).
 // 2026-09-30: Tiltak status select in scenario modal gets light background color per status.
@@ -902,20 +903,66 @@
         return;
       }
       mappings.forEach(function (m) {
-        let html = '<div class="risiko-sammenstilling-mapping-row">' +
+        let html = '<div class="risiko-sammenstilling-mapping-row" data-sammenstilling-pk="' + escapeHtml(String(m.pk)) + '">' +
           '<a href="' + escapeHtml(m.url) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(m.title) + '</a>: ';
         (m.nodes || []).forEach(function (node) {
           const tooltip = (node.parent_title ? node.parent_title + ' › ' : '') + node.title +
             (node.status === 'archived' ? ' (arkivert)' : '');
-          html += '<span class="badge badge-light' +
+          html += '<span class="badge badge-light risiko-sammenstilling-mapping-node' +
             (node.status === 'archived' ? ' risiko-sammenstilling-mapping-node-archived' : '') +
-            '" title="' + escapeHtml(tooltip) + '">' +
-            escapeHtml(node.display_code) + ' ' + escapeHtml(node.title) + '</span>';
+            '" title="' + escapeHtml(tooltip) + '" data-link-pk="' + escapeHtml(String(node.link_pk || '')) + '">' +
+            escapeHtml(node.display_code) + ' ' + escapeHtml(node.title);
+          // 2026-11-25: Unlink only when server says can_unlink (sammenstilling owner + scope read).
+          if (node.can_unlink && node.unlink_url) {
+            html += ' <button type="button" class="btn btn-link btn-sm p-0 risiko-sammenstilling-unlink" ' +
+              'data-unlink-url="' + escapeHtml(node.unlink_url) + '" ' +
+              'title="Fjern kobling til denne underkategorien" aria-label="Fjern kobling">&times;</button>';
+          }
+          html += '</span>';
         });
         html += '</div>';
         list.insertAdjacentHTML('beforeend', html);
       });
       block.style.display = '';
+    }
+
+    function unlinkSammenstillingMapping(btn) {
+      const unlinkUrl = btn.getAttribute('data-unlink-url');
+      if (!unlinkUrl) return;
+      const nodeEl = btn.closest('.risiko-sammenstilling-mapping-node');
+      const rowEl = btn.closest('.risiko-sammenstilling-mapping-row');
+      const block = document.getElementById('risiko-sammenstilling-mappings');
+      const nodeLabel = nodeEl ? nodeEl.getAttribute('title') || 'underkategorien' : 'underkategorien';
+      showConfirmModal({
+        title: 'Fjern kobling',
+        message: 'Fjerne koblingen til «' + nodeLabel + '»?',
+        detail: 'Risikoen fjernes fra underkategorien i risikosammenstillingen. Selve risikoen beholdes.',
+        confirmLabel: 'Fjern kobling',
+        confirmClass: 'btn-outline-danger',
+      }).then(function (confirmed) {
+        if (!confirmed) return;
+        btn.disabled = true;
+        setModalStatus('Fjerner kobling…');
+        fetchJson(unlinkUrl, {
+          method: 'POST',
+          body: JSON.stringify({}),
+        })
+          .then(function () {
+            if (nodeEl) nodeEl.remove();
+            if (rowEl && !rowEl.querySelector('.risiko-sammenstilling-mapping-node')) {
+              rowEl.remove();
+            }
+            const list = document.getElementById('risiko-sammenstilling-mappings-list');
+            if (block && list && !list.querySelector('.risiko-sammenstilling-mapping-row')) {
+              block.style.display = 'none';
+            }
+            setModalStatus('Kobling fjernet.');
+          })
+          .catch(function (err) {
+            btn.disabled = false;
+            setModalStatus(err.message || 'Kunne ikke fjerne kobling', true);
+          });
+      });
     }
 
     function statusOptionsHtml(selected) {
@@ -2407,6 +2454,18 @@
         scheduleScenarioAutosave();
       }
     });
+
+    // 2026-11-25: Unlink category mapping from scenario modal (POST existing link_delete API).
+    const sammenstillingMappingsList = document.getElementById('risiko-sammenstilling-mappings-list');
+    if (sammenstillingMappingsList) {
+      sammenstillingMappingsList.addEventListener('click', function (e) {
+        const unlinkBtn = e.target.closest('.risiko-sammenstilling-unlink');
+        if (!unlinkBtn || !sammenstillingMappingsList.contains(unlinkBtn)) return;
+        e.preventDefault();
+        e.stopPropagation();
+        unlinkSammenstillingMapping(unlinkBtn);
+      });
+    }
 
     document.getElementById('risiko-system-sok').addEventListener('input', function (e) {
       const q = e.target.value.trim();

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-25: sammenstilling_mappings include link_pk/can_unlink/unlink_url for modal unlink (owner-group + scope read).
 # 2026-10-12: _auto_risk_id uses next free R# (not count+1) – avoid unique_together collision after deletes.
 # 2026-09-30: Scenario detail includes sammenstilling_mappings (visible sammenstillinger only) for modal display.
 # 2026-09-08: System payloads include ute_av_bruk and select_label (livsløp 6–7) for unused-system UI.
@@ -62,7 +63,11 @@ from systemoversikt.models import (
 	System,
 	Virksomhet,
 )
-from systemoversikt.risk_sammenstilling import sammenstillinger_visible_to_user
+from systemoversikt.risk_sammenstilling import (
+	sammenstillinger_visible_to_user,
+	user_can_map_sammenstilling,
+	user_can_map_scenario,
+)
 from systemoversikt.risk_criteria import (
 	get_active_criteria,
 	konsekvens_lookup_label,
@@ -356,6 +361,7 @@ def _scenario_to_dict(scenario, tiltak_id_map=None, risk_id_by_pk=None, ansvarli
 
 def _scenario_sammenstilling_mappings(user, scenario):
 	"""Reverse kartlegging: sammenstillinger (readable by user) where scenario is mapped to underkategorier."""
+	# 2026-11-25: can_unlink mirrors api_risiko_sammenstilling_link_delete (owner map + scope read).
 	links = RiskSammenstillingScenarioLink.objects.filter(
 		scenario=scenario,
 		sammenstilling__in=sammenstillinger_visible_to_user(user),
@@ -370,11 +376,15 @@ def _scenario_sammenstilling_mappings(user, scenario):
 		'framework_node__rekkefolge',
 		'framework_node__nummer',
 	)
+	can_map_scenario = user_can_map_scenario(user, scenario)
 	result = []
 	by_pk = {}
+	can_map_by_sam = {}
 	for link in links:
 		entry = by_pk.get(link.sammenstilling_id)
 		if entry is None:
+			can_map_sam = user_can_map_sammenstilling(user, link.sammenstilling)
+			can_map_by_sam[link.sammenstilling_id] = can_map_sam
 			entry = {
 				'pk': link.sammenstilling_id,
 				'title': link.sammenstilling.title,
@@ -384,12 +394,21 @@ def _scenario_sammenstilling_mappings(user, scenario):
 			by_pk[link.sammenstilling_id] = entry
 			result.append(entry)
 		node = link.framework_node
-		entry['nodes'].append({
+		can_unlink = bool(can_map_by_sam.get(link.sammenstilling_id) and can_map_scenario)
+		node_payload = {
 			'display_code': node.display_code(),
 			'title': node.title,
 			'parent_title': node.parent.title if node.parent_id else '',
 			'status': node.status,
-		})
+			'link_pk': link.pk,
+			'can_unlink': can_unlink,
+		}
+		if can_unlink:
+			node_payload['unlink_url'] = reverse(
+				'api_risiko_sammenstilling_link_delete',
+				kwargs={'pk': link.sammenstilling_id, 'lid': link.pk},
+			)
+		entry['nodes'].append(node_payload)
 	return result
 
 
