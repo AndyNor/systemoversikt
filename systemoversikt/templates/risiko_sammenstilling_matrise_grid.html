@@ -1,3 +1,5 @@
+{# Change log: #}
+{# 2026-11-25: Show category display_code in matrix badges (same pattern as underkategorier). #}
 {# 2026-07-06: axis-label-level class for equal-width wrapping axis labels. #}
 {# 2026-07-06: Full category title in matrix cells instead of display code. #}
 {# 2026-07-06: Risk matrix for sammenstilling main categories (nåværende risiko). #}
@@ -29,7 +31,7 @@
 	{% for cell in row.cells %}
 	<td class="{{ cell.css_class }}{% if not cell.categories %} risk-matrix-cell-empty{% endif %}">
 		{% for cat in cell.categories %}
-			<a class="risk-badge" href="#rammeverk-cat-{{ cat.pk }}" title="{{ cat.display_code }}. {{ cat.title }}">{{ cat.title }}</a>
+			<a class="risk-badge" href="#rammeverk-cat-{{ cat.pk }}" title="{{ cat.display_code }}. {{ cat.title }}">{{ cat.display_code }} {{ cat.title }}</a>
 		{% endfor %}
 	</td>
 	{% endfor %}
