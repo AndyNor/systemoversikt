@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-25: Log scenario link/unlink to RiskActivityLog (sammenstilling + scope) for activity pages.
 # 2026-10-01: Hovedkategori level is computed automatically – manual assessment save/apply APIs removed.
 # 2026-10-01: Active nodes API – include forklaring so kartlegging dropdown can be searched by description.
 # 2026-08-23: JSON APIs return 401 session_expired instead of OIDC redirect via login_required.
@@ -31,8 +32,13 @@ from systemoversikt.risk_framework import (
 	search_scenarios_for_mapping,
 )
 from systemoversikt.api_risiko_rammeverk import _taxonomy_tree as mal_taxonomy_tree
-from systemoversikt.api_risiko import _json_error, _parse_json_body
-from systemoversikt.risk_activity_log import RISK_ACTIVITY_SAMMENSTILLING_CREATED, log_risk_activity
+from systemoversikt.api_risiko import _json_error, _parse_json_body, _scenario_log_label
+from systemoversikt.risk_activity_log import (
+	RISK_ACTIVITY_SAMMENSTILLING_CREATED,
+	RISK_ACTIVITY_SAMMENSTILLING_SCENARIO_LINKED,
+	RISK_ACTIVITY_SAMMENSTILLING_SCENARIO_UNLINKED,
+	log_risk_activity,
+)
 from systemoversikt.risk_sammenstilling import (
 	all_owner_groups_queryset,
 	get_active_sammenstilling,
@@ -383,6 +389,20 @@ def api_risiko_sammenstilling_link_create(request, pk):
 			)
 			if was_created:
 				created.append(link.pk)
+				# 2026-11-25: Log mapping so sammenstilling and scope activity pages show who/when.
+				log_risk_activity(
+					RISK_ACTIVITY_SAMMENSTILLING_SCENARIO_LINKED,
+					'%s koblet risiko %s til %s (%s) i «%s».' % (
+						request.user.get_username(),
+						_scenario_log_label(scenario),
+						node.display_code(),
+						node.title,
+						sammenstilling.title,
+					),
+					user=request.user,
+					scope=scenario.scope,
+					sammenstilling=sammenstilling,
+				)
 	if not created and skipped:
 		return _json_error('Ingen av scenarioene er innenfor din tilgang til risikosamlinger.', status=403)
 	return _json_ok({'created_count': len(created), 'skipped_count': skipped})
@@ -395,13 +415,28 @@ def api_risiko_sammenstilling_link_delete(request, pk, lid):
 	if denied:
 		return denied
 	link = get_object_or_404(
-		RiskSammenstillingScenarioLink,
+		RiskSammenstillingScenarioLink.objects.select_related('scenario', 'framework_node'),
 		pk=lid,
 		sammenstilling=sammenstilling,
 	)
 	scenario = link.scenario
 	if not user_can_map_scenario(request.user, scenario):
 		return _json_error('Ingen tilgang til dette scenarioet.', status=403)
+	node = link.framework_node
+	# 2026-11-25: Log unmap before delete (same API used from kartlegging and scope modal).
+	log_risk_activity(
+		RISK_ACTIVITY_SAMMENSTILLING_SCENARIO_UNLINKED,
+		'%s fjernet risiko %s fra %s (%s) i «%s».' % (
+			request.user.get_username(),
+			_scenario_log_label(scenario),
+			node.display_code(),
+			node.title,
+			sammenstilling.title,
+		),
+		user=request.user,
+		scope=scenario.scope,
+		sammenstilling=sammenstilling,
+	)
 	link.delete()
 	return _json_ok({})
 

@@ -2,6 +2,7 @@
 The `urlpatterns` list routes URLs to views. For more information please see:
 	https://docs.djangoproject.com/en/1.11/topics/http/urls/
 """
+# 2026-11-25: /sikkerhet/risiko/mine-tiltak/ – tiltak assigned to logged-in user.
 # 2026-11-16: epost on /api/kiprotokoll/search/ again = personal systemforvalter only (not virksomhet-wide).
 # 2026-11-11: Removed GET /api/kiprotokoll/ and /api/klientside/kiprotokoll/ – only POST search remains.
 # 2026-11-11: POST /api/kiprotokoll/search/ – body epost or virksomhet; returns [{id, navn}, ...].
@@ -180,6 +181,8 @@ urlpatterns = [
 	re_path(r'^sikkerhet/risiko/$', views_risiko.risiko_scope_list, name='risiko_scope_list'),
 	re_path(r'^sikkerhet/risiko/api/session/$', views_risiko.api_risiko_session_ping, name='api_risiko_session_ping'),
 	re_path(r'^sikkerhet/risiko/tiltak/$', views_risiko.risiko_tiltak_oversikt, name='risiko_tiltak_oversikt'),
+	# 2026-11-25: Mine tiltak – tiltak assigned to the logged-in user.
+	re_path(r'^sikkerhet/risiko/mine-tiltak/$', views_risiko.risiko_mine_tiltak, name='risiko_mine_tiltak'),
 	re_path(r'^sikkerhet/risiko/unntak/$', views_risiko.risiko_unntak_oversikt, name='risiko_unntak_oversikt'),
 	re_path(r'^sikkerhet/risiko/ny/$', views_risiko.risiko_scope_create, name='risiko_scope_create'),
 	re_path(r'^sikkerhet/risiko/import/$', views_risiko.risiko_import, name='risiko_import'),

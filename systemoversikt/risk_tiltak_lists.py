@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-25: Mine tiltak queryset – tiltak where ansvarlig matches logged-in user email/username.
 # 2026-10-13: Default tiltak status filter – besluttet, under_arbeid, kontinuerlig_oppfolging.
 # 2026-10-13: Multi-status via getlist/checkboxes for tiltak overview filters.
 # 2026-08-13: Server-side filters for global tiltak and unntak overviews.
@@ -159,9 +160,45 @@ def paginate_queryset(qs, params, page_size=PAGE_SIZE):
 	return paginator.get_page(page_number)
 
 
+def _ansvarlig_identities_for_user(user):
+	"""Email/UPN values that may be stored on RiskAction.ansvarlig for this user."""
+	identities = []
+	seen = set()
+	for raw in (getattr(user, 'email', None), getattr(user, 'username', None)):
+		val = (raw or '').strip()
+		if not val:
+			continue
+		key = val.lower()
+		if key in seen:
+			continue
+		seen.add(key)
+		identities.append(val)
+	return identities
+
+
 def tiltak_overview_queryset(user, params):
 	include_archived = (params.get('include_archived') or '').strip() in ('1', 'true', 'yes')
 	qs = actions_visible_to_user(user, include_archived=include_archived)
+	qs = qs.select_related('scope', 'scope__virksomhet').prefetch_related('scenarios', 'unntak')
+	qs = filter_actions_queryset(qs, params)
+	qs = qs.annotate(
+		unntak_aktiv_count=Count('unntak', filter=Q(unntak__aktiv=True)),
+	).order_by('scope__title', 'pk')
+	return qs
+
+
+def mine_tiltak_overview_queryset(user, params):
+	# 2026-11-25: Same filters as global tiltak overview, limited to tiltak assigned to the user.
+	include_archived = (params.get('include_archived') or '').strip() in ('1', 'true', 'yes')
+	qs = actions_visible_to_user(user, include_archived=include_archived)
+	identities = _ansvarlig_identities_for_user(user)
+	if not identities:
+		qs = qs.none()
+	else:
+		ansvarlig_q = Q()
+		for ident in identities:
+			ansvarlig_q |= Q(ansvarlig__iexact=ident)
+		qs = qs.filter(ansvarlig_q)
 	qs = qs.select_related('scope', 'scope__virksomhet').prefetch_related('scenarios', 'unntak')
 	qs = filter_actions_queryset(qs, params)
 	qs = qs.annotate(

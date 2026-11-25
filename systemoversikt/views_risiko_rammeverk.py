@@ -357,6 +357,7 @@ def risiko_sammenstilling_kartlegging(request, pk):
 
 @login_required
 def risiko_sammenstilling_activity(request, pk):
+	# 2026-11-25: Also includes scenario link/unlink (kartlegging and scope-modal unmap).
 	# 2026-07-09: Per-sammenstilling workflow activity log (create, archive).
 	sammenstilling = _sammenstilling_or_404(pk)
 	if not user_can_view_sammenstilling(request.user, sammenstilling):

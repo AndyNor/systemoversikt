@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-25: Sammenstilling scenario link/unlink event types for kartlegging and scope-modal unmap.
 # 2026-10-01: Mal node delete event type – subcategory deletion in mal editor (duplicates).
 # 2026-08-13: Unntak create/update/delete event types for tiltak coverage gaps.
 # 2026-08-10: Scenario/tiltak/member event types for extended risk activity logging.
@@ -15,6 +16,8 @@ RISK_ACTIVITY_SCOPE_STATUS_CHANGED = 'scope_status_changed'
 RISK_ACTIVITY_SCOPE_ARCHIVED = 'scope_archived'
 RISK_ACTIVITY_SAMMENSTILLING_CREATED = 'sammenstilling_created'
 RISK_ACTIVITY_SAMMENSTILLING_ARCHIVED = 'sammenstilling_archived'
+RISK_ACTIVITY_SAMMENSTILLING_SCENARIO_LINKED = 'sammenstilling_scenario_linked'
+RISK_ACTIVITY_SAMMENSTILLING_SCENARIO_UNLINKED = 'sammenstilling_scenario_unlinked'
 RISK_ACTIVITY_CRITERIA_UPDATED = 'criteria_updated'
 RISK_ACTIVITY_CRITERIA_IMPORTED = 'criteria_imported'
 RISK_ACTIVITY_MAL_NODE_CREATED = 'mal_node_created'
@@ -42,6 +45,8 @@ RISK_ACTIVITY_EVENT_LABELS = {
 	RISK_ACTIVITY_SCOPE_ARCHIVED: 'Risikosamling arkivert',
 	RISK_ACTIVITY_SAMMENSTILLING_CREATED: 'Sammenstilling opprettet',
 	RISK_ACTIVITY_SAMMENSTILLING_ARCHIVED: 'Sammenstilling arkivert',
+	RISK_ACTIVITY_SAMMENSTILLING_SCENARIO_LINKED: 'Risiko koblet til sammenstilling',
+	RISK_ACTIVITY_SAMMENSTILLING_SCENARIO_UNLINKED: 'Risiko frakoblet fra sammenstilling',
 	RISK_ACTIVITY_CRITERIA_UPDATED: 'Akseptkriterier endret',
 	RISK_ACTIVITY_CRITERIA_IMPORTED: 'Akseptkriterier importert',
 	RISK_ACTIVITY_MAL_NODE_CREATED: 'Mal: node opprettet',

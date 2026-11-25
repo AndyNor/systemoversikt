@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-25: risiko_mine_tiltak – tiltak assigned to logged-in user (ansvarlig email/UPN).
 # 2026-11-25: can_open_scenario_modal – read-only scenario modal when godkjent/locked (viewers + members).
 # 2026-08-23: Access denied auto-starts OIDC for anonymous users before showing risk 403 page.
 # 2026-08-23: Session ping JSON endpoint + RiskApiUnauthorized for unauthenticated AJAX.
@@ -126,6 +127,7 @@ from systemoversikt.risk_membership import (
 from systemoversikt.risk_tiltak_lists import (
 	DEFAULT_TILTAK_STATUS_FILTER,
 	filter_context_from_params,
+	mine_tiltak_overview_queryset,
 	paginate_queryset,
 	tiltak_overview_queryset,
 	unntak_overview_queryset,
@@ -411,6 +413,26 @@ def risiko_tiltak_oversikt(request):
 	)
 	virksomheter = virksomheter_with_risk_read_access(request.user)
 	return render(request, 'risiko_tiltak_oversikt.html', {
+		'request': request,
+		'page': page,
+		'rows': _tiltak_overview_rows(page.object_list),
+		'virksomheter': virksomheter,
+		'profile_virksomhet': profile_virksomhet(request.user),
+		**filter_ctx,
+	})
+
+
+@login_required
+def risiko_mine_tiltak(request):
+	# 2026-11-25: Tiltak where ansvarlig matches the logged-in user; same default status filter as Risikotiltak.
+	qs = mine_tiltak_overview_queryset(request.user, request.GET)
+	page = paginate_queryset(qs, request.GET)
+	filter_ctx = filter_context_from_params(
+		request.GET,
+		default_statuses=DEFAULT_TILTAK_STATUS_FILTER,
+	)
+	virksomheter = virksomheter_with_risk_read_access(request.user)
+	return render(request, 'risiko_mine_tiltak.html', {
 		'request': request,
 		'page': page,
 		'rows': _tiltak_overview_rows(page.object_list),

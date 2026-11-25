@@ -1,3 +1,4 @@
+{# 2026-11-25: Activity page also lists scenario link/unlink, not only create/archive. #}
 {# 2026-07-09: Per-sammenstilling workflow activity log page. #}
 {% extends "sikkerhet_index.html" %}
 
@@ -11,7 +12,7 @@
 	<a class="btn btn-back btn-sm" href="{% url 'risiko_sammenstilling_detail' pk=sammenstilling.pk %}">&larr; Tilbake til sammenstilling</a>
 </p>
 
-<p class="text-muted">Viser opprettelse og arkivering for denne sammenstillingen (siste {{ activity_logs.count }} hendelser).</p>
+<p class="text-muted">Viser opprettelse, arkivering og kobling/avkobling av risiko for denne sammenstillingen (siste {{ activity_logs.count }} hendelser).</p>
 
 {% include "includes/risiko_activity_log_table.html" %}
 
