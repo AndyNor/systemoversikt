@@ -1,3 +1,4 @@
+{# 2026-11-26: Banner + tag when driftsplattform.avviklet is set. #}
 {# 2026-11-25: Show forvalter_kontaktpersoner_referanse under Om plattformen. #}
 {# 2026-11-05: Merged system list + forvalter filter; isolert as tag; tilgj. column. #}
 {# 2026-11-05: Generelt merged into info panel; compact system lists. #}
@@ -13,6 +14,11 @@
 	{% if driftsmodell.ansvarlig_virksomhet %}
 		{% url 'driftsmodell_virksomhet' pk=driftsmodell.ansvarlig_virksomhet.pk as url_ansvarlig %}
 		<a href="{{ url_ansvarlig }}" class="badge badge-light border driftsmodell-virksomhet-tag" title="{{ driftsmodell.ansvarlig_virksomhet }}">{{ driftsmodell.ansvarlig_virksomhet.virksomhetsforkortelse }}</a>
+	{% endif %}
+	{% if driftsmodell.avviklet %}
+		<div class="alert alert-warning py-2 px-3 mt-2 mb-0" role="alert">
+			Denne driftsplattformen er avviklet og anses ikke lenger i bruk.
+		</div>
 	{% endif %}
 {% endblock overskrift %}
 
@@ -121,6 +127,11 @@
 .driftsmodell-tag-samarbeid {
 	background: #fff3cd;
 	color: #6b5500;
+}
+/* 2026-11-26: Soft-retired platform badge. */
+.driftsmodell-tag-avviklet {
+	background: #f8d7da;
+	color: #721c24;
 }
 .driftsmodell-jump {
 	display: flex;
@@ -381,6 +392,7 @@
 		{% if driftsmodell.er_saas %}<span class="driftsmodell-tag driftsmodell-tag-saas">SaaS</span>{% endif %}
 		{% if driftsmodell.utviklingsplattform %}<span class="driftsmodell-tag driftsmodell-tag-utvikling">Utvikling</span>{% endif %}
 		{% if driftsmodell.samarbeidspartner %}<span class="driftsmodell-tag driftsmodell-tag-samarbeid">Samarbeidspartner</span>{% endif %}
+		{% if driftsmodell.avviklet %}<span class="driftsmodell-tag driftsmodell-tag-avviklet">Avviklet</span>{% endif %}
 	</div>
 </div>
 

@@ -12484,6 +12484,7 @@ def alle_leverandorer(request):
 
 def alle_driftsmodeller(request):
 	#Vise liste over alle driftsmodeller
+	# 2026-11-26: Hide avviklede platforms from overview table, filters and graph.
 	# 2026-11-25: Prefetch forvalter_kontaktpersoner_referanse (person forvalter) for overview list.
 	# 2026-11-05: Dual in-node badges (system + høy tilgjengelighet); virksomhet filter sidebar; type colors.
 	# 2026-11-05: Overview graph heat = tilgjengelighetsvurdering per platform; count badges; no global doughnut.
@@ -12494,7 +12495,7 @@ def alle_driftsmodeller(request):
 		return render_access_denied(request, required_permissions)
 
 	driftsmodeller = list(
-		Driftsmodell.objects.annotate(
+		Driftsmodell.objects.filter(avviklet=False).annotate(
 			antall_systemer=Count('systemer', filter=~Q(systemer__livslop_status=7)),
 		).select_related(
 			'ansvarlig_virksomhet',
@@ -12879,12 +12880,14 @@ def _driftsmodell_tilgjengelighet_stats_per_plattform():
 
 
 def _driftsmodell_relaterte_plattform_pks(driftsmodell):
+	# 2026-11-26: Exclude other avviklede platforms from neighborhood; keep current even if avviklet.
 	# 2026-11-05: Ancestor chain + all descendant platform ids for neighborhood graph.
 	pks = {driftsmodell.pk}
 	ancestor = driftsmodell.overordnet_plattform
 	seen = set()
 	while ancestor is not None and ancestor.pk not in seen:
-		pks.add(ancestor.pk)
+		if not ancestor.avviklet:
+			pks.add(ancestor.pk)
 		seen.add(ancestor.pk)
 		ancestor = ancestor.overordnet_plattform
 
@@ -12892,7 +12895,8 @@ def _driftsmodell_relaterte_plattform_pks(driftsmodell):
 	while kø:
 		forelder_pk = kø.pop(0)
 		for barn_pk in Driftsmodell.objects.filter(
-			overordnet_plattform_id=forelder_pk
+			overordnet_plattform_id=forelder_pk,
+			avviklet=False,
 		).values_list('pk', flat=True):
 			if barn_pk not in pks:
 				pks.add(barn_pk)
@@ -13054,6 +13058,7 @@ def _driftsmodell_plattform_graf(
 
 def detaljer_driftsmodell(request, pk):
 	#Vise detaljer om en valgt driftsmodell (inkl. systemer tilknyttet)
+	# 2026-11-26: Detail stays reachable for avviklede; hide other avviklede from graph/underplattformer.
 	# 2026-11-25: Prefetch forvalter_kontaktpersoner_referanse for person forvalter on detail page.
 	# 2026-11-05: Merged systems + forvalter filter; isolert tag; tilgjengelighet column.
 	# 2026-11-05: Tilgjengelighet doughnut; comment first; tags; jump nav; isolert vs vanlige.
@@ -13070,7 +13075,7 @@ def detaljer_driftsmodell(request, pk):
 		).prefetch_related(
 			Prefetch(
 				'driftsmodell_overordnet_plattform',
-				queryset=Driftsmodell.objects.select_related('ansvarlig_virksomhet').order_by('navn'),
+				queryset=Driftsmodell.objects.filter(avviklet=False).select_related('ansvarlig_virksomhet').order_by('navn'),
 			),
 			Prefetch(
 				'forvalter_kontaktpersoner_referanse',
@@ -13153,6 +13158,7 @@ def detaljer_driftsmodell(request, pk):
 	plattform_graf = _driftsmodell_plattform_graf(
 		plattformer_by_pk, systemtall_per_plattform, current_pk=driftsmodell.pk
 	)
+	# Prefetch already excludes avviklede children.
 	underplattformer = list(driftsmodell.driftsmodell_overordnet_plattform.all())
 
 	return render(request, 'driftsmodell_detaljer.html', {
@@ -15625,6 +15631,7 @@ def api_programvarer(request): #tjeneste- og systemoversikt
 
 
 def api_driftsplattformer(request): #tjeneste- og systemoversikt
+	# 2026-11-26: Expose bool_avviklet; do not filter – consumers decide.
 	# 2026-06-23: Update api_tjeneste_systemoversikt_docs.py when changing /api/driftsplattformer/ or Driftsmodell JSON fields (url name: api_tjeneste_systemoversikt_docs).
 	if not request.method == "GET":
 		raise Http404
@@ -15653,6 +15660,7 @@ def api_driftsplattformer(request): #tjeneste- og systemoversikt
 		line["bool_utviklingsplattform"] = plattform.utviklingsplattform
 		line["bool_samarbeidspartner"] = plattform.samarbeidspartner
 		line["bool_er_saas"] = plattform.er_saas
+		line["bool_avviklet"] = plattform.avviklet
 
 		data.append(line)
 

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-26: Driftsmodell.avviklet in admin; System FK dropdown excludes avviklede (keeps current).
 # 2026-11-25: DriftsmodellAdmin – forvalter_kontaktpersoner_referanse (Ansvarlig M2M) in fieldset + autocomplete.
 # 2026-11-11: System admin – driftsplattform beside systemnavn; risikovurdering under Grunnleggende.
 # 2026-11-11: System admin – required fields in top fieldset «Obligatoriske opplysninger».
@@ -583,7 +584,16 @@ class SystemAdmin(SimpleHistoryAdmin):
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "driftsmodell_foreignkey":
-			kwargs["queryset"] = Driftsmodell.objects.order_by('navn')
+			# 2026-11-26: Hide avviklede platforms from assignment dropdown; keep current if already set.
+			qs = Driftsmodell.objects.filter(avviklet=False)
+			obj_id = getattr(request.resolver_match, 'kwargs', {}).get('object_id') if request.resolver_match else None
+			if obj_id:
+				current = System.objects.filter(pk=obj_id).values_list(
+					'driftsmodell_foreignkey_id', flat=True
+				).first()
+				if current:
+					qs = Driftsmodell.objects.filter(Q(avviklet=False) | Q(pk=current))
+			kwargs["queryset"] = qs.order_by('navn')
 			# 2026-06-23: Required in admin only – model still allows null for legacy data.
 			kwargs["required"] = True
 		return super().formfield_for_foreignkey(db_field, request, **kwargs)
@@ -1453,7 +1463,9 @@ class AvtaleAdmin(SimpleHistoryAdmin):
 @admin.register(Driftsmodell)
 class DriftsmodellAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Eksport")]
-	list_display = ('navn', 'kommentar', 'ansvarlig_virksomhet', 'type_plattform')
+	# 2026-11-26: avviklet in list/filter so soft-retired platforms stay manageable.
+	list_display = ('navn', 'kommentar', 'ansvarlig_virksomhet', 'type_plattform', 'avviklet')
+	list_filter = ('avviklet', 'type_plattform', 'er_saas')
 	search_fields = ('navn',)
 	filter_horizontal = ('leverandor', 'underleverandorer', 'avtaler')
 	# 2026-11-25: Person forvalter via Ansvarlig autocomplete (same as System).
@@ -1483,7 +1495,7 @@ class DriftsmodellAdmin(SimpleHistoryAdmin):
 					'applikasjonsdriftleverandor',
 					'overordnet_plattform',
 					'type_plattform',
-					('er_saas', 'utviklingsplattform', 'samarbeidspartner'),
+					('er_saas', 'utviklingsplattform', 'samarbeidspartner', 'avviklet'),
 					'avtaler',
 					'kommentar',
 				),

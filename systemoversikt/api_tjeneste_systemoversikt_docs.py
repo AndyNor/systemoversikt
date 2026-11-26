@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-26: Driftsmodell API – bool_avviklet for soft-retired platforms.
 # 2026-10-15: SystemBruk.kommentar docs – «Kommentar til bruken» (JSON key kommentar unchanged).
 # 2026-09-14: SystemBruk tatt_i_bruk/avsluttet; kommentar docs describe Innhold (JSON key unchanged).
 # 2026-06-23: Remove overordnede_virksomheter known-bug note – fixed in api_virksomheter.
@@ -331,6 +332,7 @@ ENDPOINTS = [
 			_field("bool_utviklingsplattform", "boolean", False, "Er utviklingsplattform"),
 			_field("bool_samarbeidspartner", "boolean", False, "Er samarbeidspartner"),
 			_field("bool_er_saas", "boolean", False, "Er SaaS"),
+			_field("bool_avviklet", "boolean", False, "Avviklet (ikke lenger i bruk)"),
 		],
 		"references": [
 			"eier_virksomhet → /api/virksomheter/",
@@ -348,7 +350,8 @@ ENDPOINTS = [
       "overordnet_plattform": null,
       "bool_utviklingsplattform": false,
       "bool_samarbeidspartner": false,
-      "bool_er_saas": false
+      "bool_er_saas": false,
+      "bool_avviklet": false
     }
   ]
 }""",

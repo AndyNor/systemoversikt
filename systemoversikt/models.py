@@ -5301,6 +5301,13 @@ class Driftsmodell(models.Model):
 			default=False,
 			help_text=u"Leverandør leverer full stack (Software as a Service). Det kan finnes flere SaaS-plattformer.",
 			)
+	# 2026-11-26: Soft-retire platforms – hidden from overview; detail URL and system warnings still work.
+	avviklet = models.BooleanField(
+			verbose_name="Avviklet",
+			blank=True, null=False,
+			default=False,
+			help_text=u"Huk av hvis driftsplattformen ikke lenger er i bruk. Avviklede plattformer skjules i oversikten.",
+			)
 	sort_order = models.BigIntegerField(
 			verbose_name="Sorteringsrekkefølge",
 			default=3,

@@ -65,6 +65,15 @@
 			Systemet er plassert på tilpasset/isolert drift.
 		</div>
 	{% endif %}
+	{# 2026-11-26: Warn when system still points at a soft-retired driftsplattform. #}
+	{% if systemdetaljer.driftsmodell_foreignkey and systemdetaljer.driftsmodell_foreignkey.avviklet %}
+		{% url 'detaljer_driftsmodell' systemdetaljer.driftsmodell_foreignkey.pk as url_avviklet_plattform %}
+		<div class="system-detalj-isolert-varsel alert alert-warning py-2 px-3 mt-2 mb-0" role="alert">
+			Systemet er koblet til driftsplattformen
+			<a href="{{ url_avviklet_plattform }}">{{ systemdetaljer.driftsmodell_foreignkey }}</a>,
+			som er avviklet og anses ikke lenger i bruk.
+		</div>
+	{% endif %}
 {% endblock overskrift %}
 
 {% block ekstrastyle %}
@@ -842,7 +851,7 @@
 			{% if systemdetaljer.driftsmodell_foreignkey %}
 				{% url 'detaljer_driftsmodell' systemdetaljer.driftsmodell_foreignkey.pk as url_driftsplattform %}
 				<span class="system-detalj-badge">
-					<a href="{{ url_driftsplattform }}">{{ systemdetaljer.driftsmodell_foreignkey }}</a>
+					<a href="{{ url_driftsplattform }}">{{ systemdetaljer.driftsmodell_foreignkey }}</a>{% if systemdetaljer.driftsmodell_foreignkey.avviklet %} (avviklet){% endif %}
 				</span>
 			{% endif %}
 			{% if systemdetaljer.livslop_status %}
